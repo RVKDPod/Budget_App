@@ -98,6 +98,19 @@ select.pay-sel:focus{border-color:var(--gold);}
 .nm-empty{padding:18px;text-align:center;color:var(--ink4);font-size:12px;font-style:italic;}
 .goal-col-heads{grid-template-columns:1fr 105px 22px;}
 .alloc-col-heads{grid-template-columns:1fr 105px 22px;}
+.savings-row-done{opacity:0.42;}
+.savings-row-done input{text-decoration:line-through;color:var(--ink4);}
+.savings-done-badge{font-size:9px;letter-spacing:0.8px;text-transform:uppercase;background:#e8f5ee;color:var(--green);border:1px solid #b5d9c5;padding:1px 6px;border-radius:10px;font-weight:600;white-space:nowrap;}
+.complete-btn{background:none;border:1px solid var(--rule);color:var(--ink4);cursor:pointer;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;transition:all 0.15s;flex-shrink:0;}
+.complete-btn:hover{background:var(--green-bg);border-color:#b5d9c5;color:var(--green);}
+.complete-btn.done{background:var(--green-bg);border-color:#b5d9c5;color:var(--green);}
+.note-toggle{background:none;border:none;color:var(--ink4);cursor:pointer;font-size:11px;padding:0 3px;line-height:1;transition:color 0.15s;flex-shrink:0;}
+.note-toggle:hover{color:var(--gold);}
+.note-toggle.has-note{color:var(--gold);}
+.note-row{padding:2px 18px 8px 44px;display:none;}
+.note-row.open{display:block;}
+.note-input{width:100%;background:var(--gold-bg);border:1px solid #e8d580;border-radius:4px;padding:5px 9px;font-family:'Source Sans 3',sans-serif;font-size:12px;color:var(--ink2);resize:none;outline:none;min-height:32px;}
+.note-input:focus{border-color:var(--gold);}
 .leftover-panel .card-head{background:var(--green-bg);border-bottom-color:#b5d9c5;}
 .leftover-panel .card-title{color:var(--green);}
 .leftover-summary{padding:12px 18px;background:var(--cream);border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
@@ -196,6 +209,8 @@ body.year-view .header-band{background:#2a1a3a;}
       <button class="btn btn-mode" id="btnMode" onclick="toggleMode()">📊 Enter Actuals</button>
       <button class="btn btn-year" onclick="toggleYearView()">📅 Year Summary</button>
       <button class="btn btn-save" onclick="saveBudget()">☁️ Save</button>
+      <button class="btn btn-print no-print" onclick="copyLastMonth()" style="background:rgba(255,255,255,0.07);color:#c8d8f0;border:1px solid rgba(255,255,255,0.15);">📋 Copy Last Month</button>
+      <button class="btn btn-print no-print" onclick="exportCSV()" style="background:rgba(255,255,255,0.07);color:#c8d8f0;border:1px solid rgba(255,255,255,0.15);">⬇ Export CSV</button>
       <button class="btn btn-reset no-print" onclick="resetToDefaults()">↺ Reset</button>
       <button class="btn btn-print" onclick="window.print()">🖨 Print</button>
     </div>
@@ -281,7 +296,7 @@ body.year-view .header-band{background:#2a1a3a;}
     <div class="card-title"><div class="card-icon" style="background:#e8f5ee;color:var(--green)">🎯</div> Long-Term Savings Goals</div>
     <div class="card-total" id="ct-savings">$0.00 /mo</div>
   </div>
-  <div class="col-heads goal-col-heads"><span>Goal / Purpose</span><span style="text-align:right">Monthly Alloc.</span><span></span></div>
+  <div class="col-heads" id="ch-savings" style="grid-template-columns:1fr 105px 80px 22px"><span>Goal / Purpose</span><span style="text-align:right">Monthly Alloc.</span><span style="text-align:center">Status</span><span></span></div>
   <div id="savings-rows"></div>
   <button class="add-btn no-print" onclick="addSavingsRow()">＋ add goal</button>
 </div>
@@ -292,7 +307,7 @@ body.year-view .header-band{background:#2a1a3a;}
     <div class="card-title"><div class="card-icon" style="background:#e8f5ee;color:var(--green)">📈</div> Leftover Allocation</div>
     <div class="card-total" id="ct-leftover">$0.00 /mo</div>
   </div>
-  <div class="col-heads alloc-col-heads"><span>Destination</span><span style="text-align:right">Amount</span><span></span></div>
+  <div class="col-heads" id="ch-alloc" style="grid-template-columns:1fr 105px 22px"><span>Destination</span><span style="text-align:right">Amount</span><span></span></div>
   <div id="alloc-rows"></div>
   <button class="add-btn no-print" onclick="addAllocRow()">＋ add destination</button>
   <div class="leftover-summary">
@@ -373,6 +388,13 @@ body.year-view .header-band{background:#2a1a3a;}
     </div>
     <div class="savings-progress-grid" id="yr-savings-grid"><div class="year-empty">Select a year and click Refresh</div></div>
   </div>
+  <div class="year-card">
+    <div class="year-card-head">
+      <div class="year-card-title">📈 Leftover Allocation Totals</div>
+      <div style="font-size:12px;color:var(--green);font-weight:600;" id="yr-alloc-total-hd"></div>
+    </div>
+    <div class="savings-progress-grid" id="yr-alloc-grid"><div class="year-empty">Select a year and click Refresh</div></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -403,10 +425,10 @@ const DEFAULT_ALLOC=['General Savings','Investments'];
 function loadDefaults(){
   state={expectedRows:[],budgetedRows:[],savingsRows:[],allocRows:[]};
   uid=0;
-  DEFAULT_EXPECTED.forEach(r=>state.expectedRows.push({id:newId(),label:r.label,amount:'',actual:'',nm:r.nm}));
-  DEFAULT_BUDGETED.forEach(r=>state.budgetedRows.push({id:newId(),label:r.label,amount:'',actual:'',nm:r.nm}));
-  DEFAULT_SAVINGS.forEach(l=>state.savingsRows.push({id:newId(),label:l,amount:''}));
-  DEFAULT_ALLOC.forEach(l=>state.allocRows.push({id:newId(),label:l,amount:''}));
+  DEFAULT_EXPECTED.forEach(r=>state.expectedRows.push({id:newId(),label:r.label,amount:'',actual:'',nm:r.nm,note:''}));
+  DEFAULT_BUDGETED.forEach(r=>state.budgetedRows.push({id:newId(),label:r.label,amount:'',actual:'',nm:r.nm,note:''}));
+  DEFAULT_SAVINGS.forEach(l=>state.savingsRows.push({id:newId(),label:l,amount:'',actual:'',done:false}));
+  DEFAULT_ALLOC.forEach(l=>state.allocRows.push({id:newId(),label:l,amount:'',actual:''}));
   renderAll();
 }
 
@@ -487,10 +509,10 @@ function applySavedData(d){
   document.getElementById('s2-per').value=d.s2per||4;
   document.getElementById('s2-amt').value=d.s2amt||'';
   document.getElementById('extra-amt').value=d.extraAmt||'';
-  (d.expectedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.expectedRows.push({...r,actual:r.actual||''});});
-  (d.budgetedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.budgetedRows.push({...r,actual:r.actual||''});});
-  (d.savingsRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.savingsRows.push({...r});});
-  (d.allocRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.allocRows.push({...r});});
+  (d.expectedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.expectedRows.push({...r,actual:r.actual||'',note:r.note||''});});
+  (d.budgetedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.budgetedRows.push({...r,actual:r.actual||'',note:r.note||''});});
+  (d.savingsRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.savingsRows.push({...r,actual:r.actual||'',done:r.done||false});});
+  (d.allocRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.allocRows.push({...r,actual:r.actual||''});});
   renderAll();
   if(d.trackingMode && !trackingMode)toggleMode();
 }
@@ -605,39 +627,51 @@ function renderExpenseRows(section){
   const colHead=document.getElementById('ch-'+section);
   container.innerHTML='';
   if(trackingMode){
-    colHead.style.gridTemplateColumns='18px 1fr 90px 90px 68px 22px';
-    colHead.innerHTML='<span>★</span><span>Item</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span>';
+    colHead.style.gridTemplateColumns='18px 1fr 90px 90px 68px 20px 22px';
+    colHead.innerHTML='<span>★</span><span>Item</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span><span></span>';
   }else{
-    colHead.style.gridTemplateColumns='18px 1fr 105px 22px';
-    colHead.innerHTML='<span title="Non-monthly">★</span><span>Item</span><span style="text-align:right">Budgeted</span><span></span>';
+    colHead.style.gridTemplateColumns='18px 1fr 105px 20px 22px';
+    colHead.innerHTML='<span title="Non-monthly">★</span><span>Item</span><span style="text-align:right">Budgeted</span><span></span><span></span>';
   }
   arr.forEach(r=>{
     const bud=parseFloat(r.amount)||0,act=parseFloat(r.actual)||0,diff=bud-act;
-    const div=document.createElement('div');div.className='row';div.id='er-'+r.id;
+    const div=document.createElement('div');div.className='row-wrap';div.id='er-'+r.id;
+    const noteOpen=r.note?'open':'';
+    const hasNote=r.note?'has-note':'';
     if(trackingMode){
-      div.style.gridTemplateColumns='18px 1fr 90px 90px 68px 22px';
       const dc=act===0?'diff-zero':diff>=0?'diff-pos':'diff-neg';
       const ds=act===0?'—':(diff>=0?'+':'')+fmtRaw(diff);
       div.innerHTML=`
-        <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
-        <div class="row-name-wrap">
-          <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Expense name…" oninput="updateField('${section}',${r.id},'label',this.value)">
-          ${r.nm?'<span class="nm-tag">★ accrual</span>':''}
+        <div class="row" style="grid-template-columns:18px 1fr 90px 90px 68px 20px 22px">
+          <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
+          <div class="row-name-wrap">
+            <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Expense name…" oninput="updateField('${section}',${r.id},'label',this.value)">
+            ${r.nm?'<span class="nm-tag">★ accrual</span>':''}
+          </div>
+          <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateField('${section}',${r.id},'amount',this.value)">
+          <input type="number" value="${r.actual}" placeholder="0.00" min="0" step="0.01" class="actual-input${act>bud&&bud>0?' over':''}" oninput="updateField('${section}',${r.id},'actual',this.value)">
+          <div class="diff-val ${dc}">${ds}</div>
+          <button class="note-toggle ${hasNote}" title="Add note" onclick="toggleNote('${section}',${r.id})">💬</button>
+          <button class="del-btn no-print" onclick="deleteExpenseRow('${section}',${r.id})">×</button>
         </div>
-        <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateField('${section}',${r.id},'amount',this.value)">
-        <input type="number" value="${r.actual}" placeholder="0.00" min="0" step="0.01" class="actual-input${act>bud&&bud>0?' over':''}" oninput="updateField('${section}',${r.id},'actual',this.value)">
-        <div class="diff-val ${dc}">${ds}</div>
-        <button class="del-btn no-print" onclick="deleteExpenseRow('${section}',${r.id})">×</button>`;
+        <div class="note-row ${noteOpen}" id="note-${r.id}">
+          <textarea class="note-input" rows="1" placeholder="Add a note…" oninput="updateField('${section}',${r.id},'note',this.value)">${esc(r.note||'')}</textarea>
+        </div>`;
     }else{
-      div.style.gridTemplateColumns='18px 1fr 105px 22px';
       div.innerHTML=`
-        <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
-        <div class="row-name-wrap">
-          <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Expense name…" oninput="updateField('${section}',${r.id},'label',this.value)">
-          ${r.nm?'<span class="nm-tag">★ accrual</span>':''}
+        <div class="row" style="grid-template-columns:18px 1fr 105px 20px 22px">
+          <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
+          <div class="row-name-wrap">
+            <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Expense name…" oninput="updateField('${section}',${r.id},'label',this.value)">
+            ${r.nm?'<span class="nm-tag">★ accrual</span>':''}
+          </div>
+          <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateField('${section}',${r.id},'amount',this.value)">
+          <button class="note-toggle ${hasNote}" title="Add note" onclick="toggleNote('${section}',${r.id})">💬</button>
+          <button class="del-btn no-print" onclick="deleteExpenseRow('${section}',${r.id})">×</button>
         </div>
-        <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateField('${section}',${r.id},'amount',this.value)">
-        <button class="del-btn no-print" onclick="deleteExpenseRow('${section}',${r.id})">×</button>`;
+        <div class="note-row ${noteOpen}" id="note-${r.id}">
+          <textarea class="note-input" rows="1" placeholder="Add a note…" oninput="updateField('${section}',${r.id},'note',this.value)">${esc(r.note||'')}</textarea>
+        </div>`;
     }
     container.appendChild(div);
   });
@@ -646,12 +680,44 @@ function renderExpenseRows(section){
 
 function renderSavingsRows(){
   const container=document.getElementById('savings-rows');container.innerHTML='';
+  const colHead=document.getElementById('ch-savings');
+  if(trackingMode){
+    colHead.style.gridTemplateColumns='1fr 105px 90px 68px 80px 22px';
+    colHead.innerHTML='<span>Goal / Purpose</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span style="text-align:center">Status</span><span></span>';
+  }else{
+    colHead.style.gridTemplateColumns='1fr 105px 80px 22px';
+    colHead.innerHTML='<span>Goal / Purpose</span><span style="text-align:right">Monthly Alloc.</span><span style="text-align:center">Status</span><span></span>';
+  }
   state.savingsRows.forEach(r=>{
-    const div=document.createElement('div');div.className='row';div.style.gridTemplateColumns='1fr 105px 22px';
-    div.innerHTML=`
-      <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Goal name…" oninput="updateSavings(${r.id},'label',this.value)">
-      <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateSavings(${r.id},'amount',this.value)">
-      <button class="del-btn no-print" onclick="deleteSavings(${r.id})">×</button>`;
+    const div=document.createElement('div');div.className='row'+(r.done?' savings-row-done':'');div.id='sr-'+r.id;
+    const doneBadge=r.done?'<span class="savings-done-badge">✓ Done</span>':'';
+    const completeBtn=`<button class="complete-btn no-print ${r.done?'done':''}" onclick="toggleSavingsDone(${r.id})">${r.done?'↩ Reopen':'✓ Complete'}</button>`;
+    if(trackingMode){
+      div.style.gridTemplateColumns='1fr 105px 90px 68px 80px 22px';
+      const bud=parseFloat(r.amount)||0,act=parseFloat(r.actual)||0,diff=bud-act;
+      const dc=act===0?'diff-zero':diff>=0?'diff-pos':'diff-neg';
+      const ds=act===0?'—':(diff>=0?'+':'')+fmtRaw(diff);
+      div.innerHTML=`
+        <div class="row-name-wrap">
+          <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Goal name…" oninput="updateSavings(${r.id},'label',this.value)"${r.done?' disabled':''}>
+          ${doneBadge}
+        </div>
+        <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateSavings(${r.id},'amount',this.value)"${r.done?' disabled':''}>
+        <input type="number" value="${r.actual||''}" placeholder="0.00" min="0" step="0.01" class="actual-input${act>bud&&bud>0?' over':''}" oninput="updateSavings(${r.id},'actual',this.value)"${r.done?' disabled':''}>
+        <div class="diff-val ${dc}">${ds}</div>
+        ${completeBtn}
+        <button class="del-btn no-print" onclick="deleteSavings(${r.id})">×</button>`;
+    }else{
+      div.style.gridTemplateColumns='1fr 105px 80px 22px';
+      div.innerHTML=`
+        <div class="row-name-wrap">
+          <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Goal name…" oninput="updateSavings(${r.id},'label',this.value)"${r.done?' disabled':''}>
+          ${doneBadge}
+        </div>
+        <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateSavings(${r.id},'amount',this.value)"${r.done?' disabled':''}>
+        ${completeBtn}
+        <button class="del-btn no-print" onclick="deleteSavings(${r.id})">×</button>`;
+    }
     container.appendChild(div);
   });
   recalc();
@@ -659,12 +725,34 @@ function renderSavingsRows(){
 
 function renderAllocRows(){
   const container=document.getElementById('alloc-rows');container.innerHTML='';
+  const colHead=document.getElementById('ch-alloc');
+  if(trackingMode){
+    colHead.style.gridTemplateColumns='1fr 105px 90px 68px 22px';
+    colHead.innerHTML='<span>Destination</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span>';
+  }else{
+    colHead.style.gridTemplateColumns='1fr 105px 22px';
+    colHead.innerHTML='<span>Destination</span><span style="text-align:right">Amount</span><span></span>';
+  }
   state.allocRows.forEach(r=>{
-    const div=document.createElement('div');div.className='row';div.style.gridTemplateColumns='1fr 105px 22px';
-    div.innerHTML=`
-      <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="e.g. General Savings…" oninput="updateAlloc(${r.id},'label',this.value)">
-      <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateAlloc(${r.id},'amount',this.value)">
-      <button class="del-btn no-print" onclick="deleteAlloc(${r.id})">×</button>`;
+    const div=document.createElement('div');div.className='row';div.id='ar-'+r.id;
+    if(trackingMode){
+      div.style.gridTemplateColumns='1fr 105px 90px 68px 22px';
+      const bud=parseFloat(r.amount)||0,act=parseFloat(r.actual)||0,diff=bud-act;
+      const dc=act===0?'diff-zero':diff>=0?'diff-pos':'diff-neg';
+      const ds=act===0?'—':(diff>=0?'+':'')+fmtRaw(diff);
+      div.innerHTML=`
+        <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="e.g. General Savings…" oninput="updateAlloc(${r.id},'label',this.value)">
+        <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateAlloc(${r.id},'amount',this.value)">
+        <input type="number" value="${r.actual||''}" placeholder="0.00" min="0" step="0.01" class="actual-input${act>bud&&bud>0?' over':''}" oninput="updateAlloc(${r.id},'actual',this.value)">
+        <div class="diff-val ${dc}">${ds}</div>
+        <button class="del-btn no-print" onclick="deleteAlloc(${r.id})">×</button>`;
+    }else{
+      div.style.gridTemplateColumns='1fr 105px 22px';
+      div.innerHTML=`
+        <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="e.g. General Savings…" oninput="updateAlloc(${r.id},'label',this.value)">
+        <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateAlloc(${r.id},'amount',this.value)">
+        <button class="del-btn no-print" onclick="deleteAlloc(${r.id})">×</button>`;
+    }
     container.appendChild(div);
   });
   recalc();
@@ -691,10 +779,19 @@ function renderNM(){
 }
 
 // ── ADD / DELETE / UPDATE ─────────────────
-function addExpenseRow(section,label='',amount='',actual='',nm=false){
+function addExpenseRow(section,label='',amount='',actual='',nm=false,note=''){
   const arr=section==='expected'?state.expectedRows:state.budgetedRows;
-  arr.push({id:newId(),label,amount,actual,nm});
+  arr.push({id:newId(),label,amount,actual,nm,note});
   renderExpenseRows(section);
+}
+function toggleNote(section,id){
+  const arr=section==='expected'?state.expectedRows:state.budgetedRows;
+  const r=arr.find(r=>r.id===id);if(!r)return;
+  const noteRow=document.getElementById('note-'+id);
+  const btn=noteRow?.previousElementSibling?.querySelector('.note-toggle');
+  if(!noteRow)return;
+  const isOpen=noteRow.classList.toggle('open');
+  if(isOpen){noteRow.querySelector('textarea')?.focus();}
 }
 function deleteExpenseRow(section,id){
   if(section==='expected')state.expectedRows=state.expectedRows.filter(r=>r.id!==id);
@@ -713,6 +810,10 @@ function updateField(section,id,field,val){
       else{diffEl.textContent=(d>=0?'+':'')+fmtRaw(d);diffEl.className='diff-val '+(d>=0?'diff-pos':'diff-neg');}
     }
     recalc();
+  }else if(field==='note'){
+    // Update note toggle button to show filled state
+    const btn=document.querySelector(`#er-${id} .note-toggle`);
+    if(btn)btn.classList.toggle('has-note',val.trim().length>0);
   }else if(field==='label'){renderNM();recalc();}
   else recalc();
 }
@@ -720,12 +821,42 @@ function toggleNM(section,id,checked){
   const arr=section==='expected'?state.expectedRows:state.budgetedRows;
   const r=arr.find(r=>r.id===id);if(r){r.nm=checked;renderExpenseRows(section);}
 }
-function addSavingsRow(label='',amount=''){state.savingsRows.push({id:newId(),label,amount});renderSavingsRows();}
+function addSavingsRow(label='',amount='',actual='',done=false){state.savingsRows.push({id:newId(),label,amount,actual,done});renderSavingsRows();}
 function deleteSavings(id){state.savingsRows=state.savingsRows.filter(r=>r.id!==id);renderSavingsRows();}
-function updateSavings(id,field,val){const r=state.savingsRows.find(r=>r.id===id);if(r){r[field]=val;recalc();}}
-function addAllocRow(label='',amount=''){state.allocRows.push({id:newId(),label,amount});renderAllocRows();}
+function updateSavings(id,field,val){
+  const r=state.savingsRows.find(r=>r.id===id);if(!r)return;r[field]=val;
+  if(field==='actual'){
+    const inp=document.querySelector(`#sr-${id} input.actual-input`);
+    if(inp){const b=parseFloat(r.amount)||0,a=parseFloat(val)||0;inp.classList.toggle('over',a>b&&b>0);}
+    const diffEl=document.querySelector(`#sr-${id} .diff-val`);
+    if(diffEl){const b=parseFloat(r.amount)||0,a=parseFloat(val)||0,d=b-a;
+      if(a===0){diffEl.textContent='—';diffEl.className='diff-val diff-zero';}
+      else{diffEl.textContent=(d>=0?'+':'')+fmtRaw(d);diffEl.className='diff-val '+(d>=0?'diff-pos':'diff-neg');}
+    }
+  }
+  recalc();
+}
+function toggleSavingsDone(id){
+  const r=state.savingsRows.find(r=>r.id===id);if(!r)return;
+  r.done=!r.done;
+  renderSavingsRows();
+  showToast(r.done?'✓ Goal marked complete':'Goal reopened');
+}
+function addAllocRow(label='',amount='',actual=''){state.allocRows.push({id:newId(),label,amount,actual});renderAllocRows();}
 function deleteAlloc(id){state.allocRows=state.allocRows.filter(r=>r.id!==id);renderAllocRows();}
-function updateAlloc(id,field,val){const r=state.allocRows.find(r=>r.id===id);if(r){r[field]=val;recalc();}}
+function updateAlloc(id,field,val){
+  const r=state.allocRows.find(r=>r.id===id);if(!r)return;r[field]=val;
+  if(field==='actual'){
+    const inp=document.querySelector(`#ar-${id} input.actual-input`);
+    if(inp){const b=parseFloat(r.amount)||0,a=parseFloat(val)||0;inp.classList.toggle('over',a>b&&b>0);}
+    const diffEl=document.querySelector(`#ar-${id} .diff-val`);
+    if(diffEl){const b=parseFloat(r.amount)||0,a=parseFloat(val)||0,d=b-a;
+      if(a===0){diffEl.textContent='—';diffEl.className='diff-val diff-zero';}
+      else{diffEl.textContent=(d>=0?'+':'')+fmtRaw(d);diffEl.className='diff-val '+(d>=0?'diff-pos':'diff-neg');}
+    }
+  }
+  recalc();
+}
 
 // ── TOGGLE MODE ───────────────────────────
 function toggleMode(){
@@ -740,7 +871,7 @@ function toggleMode(){
     badge.className='mode-badge plan';badge.textContent='📋 Planning';
     btn.textContent='📊 Enter Actuals';cp.style.display='none';ta.style.display='none';tb2.style.display='';
   }
-  renderExpenseRows('expected');renderExpenseRows('budgeted');
+  renderExpenseRows('expected');renderExpenseRows('budgeted');renderSavingsRows();renderAllocRows();
 }
 
 // ── RECALC ────────────────────────────────
@@ -753,7 +884,8 @@ function recalc(){
 
   const expTotal=state.expectedRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
   const budTotal=state.budgetedRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
-  const savTotal=state.savingsRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+  // Only count non-completed savings goals in the active monthly total
+  const savTotal=state.savingsRows.filter(r=>!r.done).reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
   const allocTotal=state.allocRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
 
   // Committed spend = all expenses + savings goals
@@ -797,9 +929,13 @@ function recalc(){
 
   if(trackingMode){
     const totalActual=[...state.expectedRows,...state.budgetedRows].reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
-    // In tracking mode: use actual spend instead of budgeted for the "used" and "remaining" calculations
-    const actualCommitted=totalActual+savTotal;
-    const actualPlaced=actualCommitted+allocTotal;
+    const savActual=state.savingsRows.filter(r=>!r.done).reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
+    const allocActual=state.allocRows.reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
+    // Use actuals where entered, fall back to budgeted if zero
+    const savActualOrBud=savActual>0?savActual:savTotal;
+    const allocActualOrBud=allocActual>0?allocActual:allocTotal;
+    const actualCommitted=totalActual+savActualOrBud;
+    const actualPlaced=actualCommitted+allocActualOrBud;
     const actualUnallocated=totalIncome-actualPlaced;
 
     setTicker('tv-actual',totalActual,'neu');
@@ -904,6 +1040,7 @@ function renderYearSummary(results,year){
   let totalIncome=0,totalActual=0,totalBudgeted=0,totalSavings=0,totalAllocAssigned=0;
   const catMap={};
   const savingsGoalMap={};
+  const allocDestMap={};
   const shortMo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   const monthData=results.map(({month,i,data})=>{
@@ -923,7 +1060,16 @@ function renderYearSummary(results,year){
     });
     (data.savingsRows||[]).forEach(r=>{
       const lbl=r.label||'Savings';
-      savingsGoalMap[lbl]=(savingsGoalMap[lbl]||0)+(parseFloat(r.amount)||0);
+      if(!savingsGoalMap[lbl])savingsGoalMap[lbl]={budgeted:0,actual:0,done:false};
+      savingsGoalMap[lbl].budgeted+=parseFloat(r.amount)||0;
+      savingsGoalMap[lbl].actual+=parseFloat(r.actual)||0;
+      if(r.done)savingsGoalMap[lbl].done=true;
+    });
+    (data.allocRows||[]).forEach(r=>{
+      const lbl=r.label||'Allocation';
+      if(!allocDestMap[lbl])allocDestMap[lbl]={budgeted:0,actual:0};
+      allocDestMap[lbl].budgeted+=parseFloat(r.amount)||0;
+      allocDestMap[lbl].actual+=parseFloat(r.actual)||0;
     });
     return{month,i,income,budgeted,actual,savings,hasData:true};
   });
@@ -985,22 +1131,157 @@ function renderYearSummary(results,year){
   const ctd=totalBudgeted-totalActual;
   cfr.innerHTML=`<td>Total</td><td>${fmt(totalBudgeted)}</td><td>${fmt(totalActual)}</td><td class="${ctd>=0?'pos':'neg'}">${ctd>=0?'+':''}${fmtRaw(ctd)}</td>`;
 
-  // Savings goals
+  // Savings goals — show active and completed separately
   const sg=document.getElementById('yr-savings-grid');sg.innerHTML='';
   const goalEntries=Object.entries(savingsGoalMap);
   if(!goalEntries.length){sg.innerHTML='<div class="year-empty">No savings data found in saved months.</div>';}
   else{
     let grand=0;
-    goalEntries.forEach(([lbl,total])=>{grand+=total;
-      const card=document.createElement('div');card.className='savings-goal-card';
-      card.innerHTML=`<div class="sg-label">${esc(lbl)}</div><div class="sg-total">${fmt(total)}</div>`;
+    const active=goalEntries.filter(([,v])=>!v.done);
+    const done=goalEntries.filter(([,v])=>v.done);
+    [...active,...done].forEach(([lbl,v])=>{
+      grand+=v.budgeted;
+      const card=document.createElement('div');
+      card.className='savings-goal-card'+(v.done?' savings-row-done':'');
+      card.innerHTML=`
+        <div class="sg-label">${esc(lbl)}${v.done?' <span class="savings-done-badge">✓ Done</span>':''}</div>
+        <div class="sg-total" style="${v.done?'color:var(--ink4)':''}">${fmt(v.budgeted)} allocated</div>
+        ${v.actual>0?`<div style="font-size:11px;color:var(--green);margin-top:4px;">Actual pulled: ${fmt(v.actual)}</div>`:''}`;
       sg.appendChild(card);
     });
     document.getElementById('yr-savings-total-hd').textContent=fmt(grand)+' total';
   }
+
+  // Leftover allocation destinations
+  const allocGrid=document.getElementById('yr-alloc-grid');
+  if(allocGrid){
+    allocGrid.innerHTML='';
+    const allocEntries=Object.entries(allocDestMap);
+    if(!allocEntries.length){allocGrid.innerHTML='<div class="year-empty">No allocation data found in saved months.</div>';}
+    else{
+      let grandAlloc=0,grandAllocActual=0;
+      allocEntries.sort((a,b)=>b[1].budgeted-a[1].budgeted).forEach(([lbl,v])=>{
+        grandAlloc+=v.budgeted;grandAllocActual+=v.actual;
+        const card=document.createElement('div');card.className='savings-goal-card';
+        const diff=v.actual-v.budgeted;
+        card.innerHTML=`
+          <div class="sg-label">${esc(lbl)}</div>
+          <div class="sg-total">${fmt(v.budgeted)} budgeted</div>
+          ${v.actual>0?`<div style="font-size:11px;color:var(--green);margin-top:4px;">Actual: ${fmt(v.actual)} <span style="color:${diff>=0?'var(--green)':'var(--red)'}">(${diff>=0?'+':''}${fmtRaw(diff)})</span></div>`:''}`;
+        allocGrid.appendChild(card);
+      });
+      const hd=document.getElementById('yr-alloc-total-hd');
+      if(hd)hd.textContent=(grandAllocActual>0?fmt(grandAllocActual)+' actual / ':'')+fmt(grandAlloc)+' budgeted';
+    }
+  }
 }
 
-// ── HELPERS ───────────────────────────────
+// ── COPY LAST MONTH ───────────────────────
+async function copyLastMonth(){
+  const m=parseInt(document.getElementById('selMonth').value);
+  const y=parseInt(document.getElementById('selYear').value);
+  // Find previous month
+  const prevM = m===0?11:m-1;
+  const prevY = m===0?y-1:y;
+  const prevName=MONTHS[prevM];
+
+  showToast('Loading '+prevName+' '+prevY+'…');
+  // Try Sheets first
+  let source=await loadFromSheets(prevName,prevY);
+  // Fall back to localStorage
+  if(!source || !source.expectedRows || !source.expectedRows.length){
+    const key=`budget-${prevY}-${prevM}`;
+    const local=localStorage.getItem(key);
+    if(local){try{source=JSON.parse(local);}catch(e){}}
+  }
+  if(!source || !source.expectedRows || !source.expectedRows.length){
+    showToast('No saved data found for '+prevName+' '+prevY, true);
+    return;
+  }
+  if(!confirm(`Copy budget structure from ${prevName} ${prevY}?\n\nAmounts will be copied. Actuals will be cleared.`))return;
+
+  // Copy budget structure — keep amounts, clear actuals and done state
+  state={expectedRows:[],budgetedRows:[],savingsRows:[],allocRows:[]};
+  uid=0;
+  document.getElementById('s1-per').value=source.s1per||4;
+  document.getElementById('s1-amt').value=source.s1amt||'';
+  document.getElementById('s2-per').value=source.s2per||4;
+  document.getElementById('s2-amt').value=source.s2amt||'';
+  document.getElementById('extra-amt').value=source.extraAmt||'';
+  (source.expectedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.expectedRows.push({...r,actual:'',note:r.note||''});});
+  (source.budgetedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.budgetedRows.push({...r,actual:'',note:r.note||''});});
+  (source.savingsRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.savingsRows.push({...r,actual:'',done:false});});
+  (source.allocRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.allocRows.push({...r,actual:''});});
+  if(trackingMode)toggleMode();
+  renderAll();
+  showToast('✓ Copied from '+prevName+' '+prevY);
+}
+
+// ── EXPORT CSV ────────────────────────────
+function exportCSV(){
+  const m=parseInt(document.getElementById('selMonth').value);
+  const y=parseInt(document.getElementById('selYear').value);
+  const monthName=MONTHS[m];
+  const s1=(parseFloat(document.getElementById('s1-amt').value)||0)*parseInt(document.getElementById('s1-per').value||4);
+  const s2=(parseFloat(document.getElementById('s2-amt').value)||0)*parseInt(document.getElementById('s2-per').value||4);
+  const extra=parseFloat(document.getElementById('extra-amt').value)||0;
+  const totalIncome=s1+s2+extra;
+
+  const rows=[];
+  const q=v=>`"${String(v||'').replace(/"/g,'""')}"`;
+
+  rows.push([q('Budget Export — '+monthName+' '+y)]);
+  rows.push([]);
+  rows.push([q('INCOME')]);
+  rows.push([q('Source'),q('Paychecks'),q('Per Paycheck'),q('Total')]);
+  rows.push([q('Salary 1'),q(document.getElementById('s1-per').value),q(document.getElementById('s1-amt').value||0),q(s1.toFixed(2))]);
+  rows.push([q('Salary 2'),q(document.getElementById('s2-per').value),q(document.getElementById('s2-amt').value||0),q(s2.toFixed(2))]);
+  rows.push([q('Additional Income'),q(''),q(''),q(extra.toFixed(2))]);
+  rows.push([q('Total Income'),q(''),q(''),q(totalIncome.toFixed(2))]);
+  rows.push([]);
+
+  const addSection=(title,arr)=>{
+    rows.push([q(title)]);
+    rows.push([q('Item'),q('Budgeted'),q('Actual'),q('Difference'),q('Note')]);
+    arr.forEach(r=>{
+      const b=parseFloat(r.amount)||0,a=parseFloat(r.actual)||0;
+      rows.push([q(r.label),q(b.toFixed(2)),q(a>0?a.toFixed(2):''),q(a>0?(b-a).toFixed(2):''),q(r.note||'')]);
+    });
+    const tot=arr.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+    rows.push([q('Subtotal'),q(tot.toFixed(2)),q(''),q(''),q('')]);
+    rows.push([]);
+  };
+
+  addSection('EXPECTED EXPENSES',state.expectedRows);
+  addSection('BUDGETED EXPENSES',state.budgetedRows);
+
+  rows.push([q('LONG-TERM SAVINGS GOALS')]);
+  rows.push([q('Goal'),q('Monthly Alloc.'),q('Actual'),q('Status'),q('Note')]);
+  state.savingsRows.forEach(r=>{
+    const b=parseFloat(r.amount)||0,a=parseFloat(r.actual)||0;
+    rows.push([q(r.label),q(b.toFixed(2)),q(a>0?a.toFixed(2):''),q(r.done?'Complete':'Active'),q('')]);
+  });
+  rows.push([]);
+
+  rows.push([q('LEFTOVER ALLOCATION')]);
+  rows.push([q('Destination'),q('Budgeted'),q('Actual'),q('Difference')]);
+  state.allocRows.forEach(r=>{
+    const b=parseFloat(r.amount)||0,a=parseFloat(r.actual)||0;
+    rows.push([q(r.label),q(b.toFixed(2)),q(a>0?a.toFixed(2):''),q(a>0?(b-a).toFixed(2):'')]);
+  });
+  rows.push([]);
+
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`budget-${monthName}-${y}.csv`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('✓ Exported '+monthName+' '+y+'.csv');
+}
+
+
 function fmt(v){return '$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtRaw(v){return(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
