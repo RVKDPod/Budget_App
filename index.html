@@ -297,7 +297,7 @@ body.year-view .header-band{background:#2a1a3a;}
   <button class="add-btn no-print" onclick="addAllocRow()">＋ add destination</button>
   <div class="leftover-summary">
     <div class="ls-item"><div class="ls-label">Total Income</div><div class="ls-val neu" id="ls-income">$0.00</div></div>
-    <div class="ls-item"><div class="ls-label">Total Used</div><div class="ls-val neu" id="ls-used">$0.00</div></div>
+    <div class="ls-item"><div class="ls-label">Expenses + Savings</div><div class="ls-val neu" id="ls-used">$0.00</div></div>
     <div class="ls-item"><div class="ls-label">Unallocated</div><div class="ls-val neu" id="ls-unalloc">$0.00</div></div>
   </div>
 </div>
@@ -347,7 +347,7 @@ body.year-view .header-band{background:#2a1a3a;}
     <div class="year-stat"><div class="year-stat-label">Total Income</div><div class="year-stat-val neu" id="yr-total-income">—</div><div class="year-stat-sub">across saved months</div></div>
     <div class="year-stat"><div class="year-stat-label">Total Actual Spend</div><div class="year-stat-val neu" id="yr-total-spent">—</div><div class="year-stat-sub">real expenses entered</div></div>
     <div class="year-stat"><div class="year-stat-label">Total Saved</div><div class="year-stat-val pos" id="yr-total-saved">—</div><div class="year-stat-sub">savings goals allocated</div></div>
-    <div class="year-stat"><div class="year-stat-label">Net Surplus</div><div class="year-stat-val neu" id="yr-net-surplus">—</div><div class="year-stat-sub">income minus all spend</div></div>
+    <div class="year-stat"><div class="year-stat-label">Net Surplus</div><div class="year-stat-val neu" id="yr-net-surplus">—</div><div class="year-stat-sub">income minus all placed</div></div>
   </div>
   <div class="year-card">
     <div class="year-card-head"><div class="year-card-title">📊 Income vs. Spend by Month</div></div>
@@ -755,36 +755,50 @@ function recalc(){
   const budTotal=state.budgetedRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
   const savTotal=state.savingsRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
   const allocTotal=state.allocRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+
+  // Committed spend = all expenses + savings goals
   const totalBudgeted=expTotal+budTotal;
-  const totalBudgetPlusGoals=totalBudgeted+savTotal;
-  const totalAllocated=totalBudgetPlusGoals+allocTotal;
-  const remaining=totalIncome-totalAllocated;
+  const totalCommitted=totalBudgeted+savTotal;   // expenses + savings goals
+
+  // Leftover = what remains after committed spend
+  const leftover=totalIncome-totalCommitted;
+
+  // Unallocated = leftover minus whatever you've assigned in the leftover allocation section
+  const unallocated=leftover-allocTotal;
+
+  // Grand total placed = committed + leftover allocations
+  const totalPlaced=totalCommitted+allocTotal;
+  const remaining=totalIncome-totalPlaced;       // truly unassigned
 
   document.getElementById('ct-expected').textContent=fmt(expTotal);
   document.getElementById('ct-budgeted').textContent=fmt(budTotal);
   document.getElementById('ct-savings').textContent=fmt(savTotal)+' /mo';
   document.getElementById('ct-leftover').textContent=fmt(allocTotal)+' /mo';
 
+  // Ticker: Income | Budgeted | Budgeted+Goals | Total Placed | Remaining
   setTicker('tv-income',totalIncome,totalIncome>0?'pos':'neu');
   setTicker('tv-fixed',totalBudgeted,'neu');
-  setTicker('tv-budget',totalBudgetPlusGoals,'neu');
-  setTicker('tv-alloc',totalAllocated,'neu');
+  setTicker('tv-budget',totalCommitted,'neu');
+  setTicker('tv-alloc',totalPlaced,'neu');
   setTicker('tv-remain',remaining,remaining<0?'neg':remaining>0?'pos':'neu');
   setMeter('tb-income',100,'var(--green)');
-  setMeter('tb-fixed',totalIncome>0?(totalBudgeted/totalIncome)*100:'0','var(--red)');
-  setMeter('tb-budget',totalIncome>0?(totalBudgetPlusGoals/totalIncome)*100:'0','#c07a20');
-  setMeter('tb-alloc',totalIncome>0?(totalAllocated/totalIncome)*100:'0','var(--blue)');
-  setMeter('tb-remain',totalIncome>0?(Math.abs(remaining)/totalIncome)*100:'0',remaining<0?'var(--red)':'var(--green)');
+  setMeter('tb-fixed',totalIncome>0?(totalBudgeted/totalIncome)*100:0,'var(--red)');
+  setMeter('tb-budget',totalIncome>0?(totalCommitted/totalIncome)*100:0,'#c07a20');
+  setMeter('tb-alloc',totalIncome>0?(totalPlaced/totalIncome)*100:0,'var(--blue)');
+  setMeter('tb-remain',totalIncome>0?(Math.abs(remaining)/totalIncome)*100:0,remaining<0?'var(--red)':'var(--green)');
 
-  const unallocated=totalIncome-totalAllocated;
+  // Leftover summary card:
+  // Income | Total Used (expenses+savings) | Leftover to assign | Unallocated (leftover - assigned)
   document.getElementById('ls-income').textContent=fmt(totalIncome);
-  document.getElementById('ls-used').textContent=fmt(totalAllocated);
-  const ua=document.getElementById('ls-unalloc');ua.textContent=fmt(unallocated);ua.className='ls-val '+(unallocated<0?'neg':unallocated>0?'pos':'neu');
+  document.getElementById('ls-used').textContent=fmt(totalCommitted);
+  const ua=document.getElementById('ls-unalloc');
+  ua.textContent=fmt(unallocated);
+  ua.className='ls-val '+(unallocated<0?'neg':unallocated>0?'pos':'neu');
 
   if(trackingMode){
     const totalActual=[...state.expectedRows,...state.budgetedRows].reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
     setTicker('tv-actual',totalActual,'neu');
-    setMeter('tb-actual',totalIncome>0?(totalActual/totalIncome)*100:'0','#c07a20');
+    setMeter('tb-actual',totalIncome>0?(totalActual/totalIncome)*100:0,'#c07a20');
     document.getElementById('cmp-budgeted').textContent=fmt(totalBudgeted);
     document.getElementById('cmp-actual').textContent=fmt(totalActual);
     const actualDiff=totalBudgeted-totalActual;
@@ -869,7 +883,7 @@ async function loadYearSummary(){
 }
 
 function renderYearSummary(results,year){
-  let totalIncome=0,totalActual=0,totalBudgeted=0,totalSavings=0;
+  let totalIncome=0,totalActual=0,totalBudgeted=0,totalSavings=0,totalAllocAssigned=0;
   const catMap={};
   const savingsGoalMap={};
   const shortMo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -881,7 +895,8 @@ function renderYearSummary(results,year){
     const budgeted=rows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
     const actual=rows.reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
     const savings=(data.savingsRows||[]).reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
-    totalIncome+=income;totalBudgeted+=budgeted;totalActual+=actual;totalSavings+=savings;
+    const allocAssigned=(data.allocRows||[]).reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+    totalIncome+=income;totalBudgeted+=budgeted;totalActual+=actual;totalSavings+=savings;totalAllocAssigned+=allocAssigned;
     rows.forEach(r=>{
       const lbl=r.label||'Unnamed';
       if(!catMap[lbl])catMap[lbl]={budgeted:0,actual:0};
@@ -895,7 +910,13 @@ function renderYearSummary(results,year){
     return{month,i,income,budgeted,actual,savings,hasData:true};
   });
 
-  const netSurplus=totalIncome-totalActual-totalSavings;
+  // Mirror monthly logic:
+  // totalCommitted = expenses + savings goals
+  // totalPlaced = committed + leftover allocations
+  // netSurplus = income - totalPlaced (truly unassigned across the year)
+  const totalCommitted=totalBudgeted+totalSavings;
+  const totalPlaced=totalCommitted+totalAllocAssigned;
+  const netSurplus=totalIncome-totalPlaced;
 
   // Stats
   const yrEl=(id,val,cls)=>{const e=document.getElementById(id);if(!e)return;e.textContent=val;if(cls)e.className='year-stat-val '+cls;};
