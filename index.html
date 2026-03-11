@@ -24,8 +24,6 @@ body{background:var(--cream);color:var(--ink);font-family:'Source Sans 3',sans-s
   .ticker-strip{background:#f0ece4!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:static!important;}
   .main-grid{grid-template-columns:1fr 1fr;}
   .full-width{grid-column:1/-1;}
-  #chart-section{break-inside:avoid;}
-  canvas{max-width:100%!important;}
   .diff-pos{color:#2d6a4f!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .diff-neg{color:#8b2020!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
@@ -43,6 +41,8 @@ select.hdr-select option{background:#1c1a16;}
 .btn-save{background:var(--gold);color:#fff;}.btn-save:hover{background:#9a700a;}
 .btn-print{background:rgba(255,255,255,0.1);color:var(--cream);border:1px solid rgba(255,255,255,0.2);}.btn-print:hover{background:rgba(255,255,255,0.18);}
 .btn-mode{background:rgba(255,255,255,0.08);color:var(--cream);border:1px solid rgba(255,255,255,0.2);}.btn-mode:hover{background:rgba(255,255,255,0.18);}
+.btn-year{background:rgba(180,130,255,0.15);color:var(--cream);border:1px solid rgba(180,130,255,0.3);}.btn-year:hover{background:rgba(180,130,255,0.28);}
+.btn-reset{background:rgba(255,255,255,0.05);color:#c8a0a0;border:1px solid rgba(255,255,255,0.1);}.btn-reset:hover{background:rgba(255,100,100,0.15);}
 .mode-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;}
 .mode-badge.plan{background:var(--blue-bg);color:var(--blue);border:1px solid #c0d4ee;}
 .mode-badge.track{background:var(--green-bg);color:var(--green);border:1px solid #b5d9c5;}
@@ -64,7 +64,6 @@ select.hdr-select option{background:#1c1a16;}
 .card-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;}
 .card-total{font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;color:var(--ink);}
 .col-heads{display:grid;padding:6px 18px;background:var(--cream);border-bottom:1px solid var(--rule);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink4);font-weight:600;gap:8px;}
-.income-row{grid-template-columns:1fr 130px 118px;}
 .income-col-heads{grid-template-columns:1fr 130px 118px;}
 .row{display:grid;align-items:center;padding:8px 18px;border-bottom:1px solid #f0ece4;gap:8px;transition:background 0.1s;}
 .row:last-child{border-bottom:none;}
@@ -97,9 +96,7 @@ select.pay-sel:focus{border-color:var(--gold);}
 .nm-row:last-child{border-bottom:none;}
 .nm-amt{font-family:'Libre Baskerville',serif;font-weight:700;color:var(--gold);}
 .nm-empty{padding:18px;text-align:center;color:var(--ink4);font-size:12px;font-style:italic;}
-.goal-row{grid-template-columns:1fr 105px 22px;}
 .goal-col-heads{grid-template-columns:1fr 105px 22px;}
-.alloc-row{grid-template-columns:1fr 105px 22px;}
 .alloc-col-heads{grid-template-columns:1fr 105px 22px;}
 .leftover-panel .card-head{background:var(--green-bg);border-bottom-color:#b5d9c5;}
 .leftover-panel .card-title{color:var(--green);}
@@ -127,10 +124,12 @@ canvas#pie{max-width:210px;max-height:210px;}
 .legend-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
 .legend-pct{margin-left:auto;font-family:'Libre Baskerville',serif;font-weight:700;color:var(--ink);font-size:12px;}
 .legend-amt{color:var(--ink4);font-size:11px;margin-left:3px;}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--cream);padding:11px 18px;border-radius:6px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:999;}
+.toast{position:fixed;bottom:24px;right:24px;color:var(--cream);padding:11px 18px;border-radius:6px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:999;background:var(--ink);}
 .toast.show{opacity:1;transform:translateY(0);}
 body.tracking-mode .header-band{background:#1a2e1a;}
 body.year-view .header-band{background:#2a1a3a;}
+
+/* YEAR SUMMARY */
 #year-view{display:none;max-width:1280px;margin:0 auto;padding:24px 24px 80px;}
 #year-view.active{display:block;}
 .year-stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
@@ -141,15 +140,15 @@ body.year-view .header-band{background:#2a1a3a;}
 .year-stat-sub{font-size:10px;color:var(--ink4);margin-top:3px;}
 .year-card{background:#fff;border:1px solid var(--rule);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px;}
 .year-card-head{background:var(--cream2);border-bottom:1px solid var(--rule);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
-.year-card-title{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
-.year-loading{padding:40px;text-align:center;color:var(--ink4);font-style:italic;font-size:13px;}
+.year-card-title{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--ink);}
+.year-empty{padding:32px;text-align:center;color:var(--ink4);font-style:italic;font-size:13px;}
 .bar-chart-wrap{padding:24px 20px 8px;overflow-x:auto;}
 .bar-chart{display:flex;align-items:flex-end;gap:8px;height:200px;min-width:560px;}
 .bar-group{display:flex;flex-direction:column;align-items:center;flex:1;}
 .bar-group-bars{display:flex;align-items:flex-end;gap:3px;height:170px;width:100%;}
-.bar{border-radius:3px 3px 0 0;flex:1;transition:opacity 0.2s;cursor:default;min-width:10px;}
+.bar{border-radius:3px 3px 0 0;flex:1;min-width:8px;}
 .bar:hover{opacity:0.75;}
-.bar-label{font-size:9px;color:var(--ink4);text-align:center;margin-top:5px;letter-spacing:0.3px;}
+.bar-label{font-size:9px;color:var(--ink4);text-align:center;margin-top:5px;}
 .bar-legend{display:flex;gap:20px;padding:4px 20px 16px;font-size:11px;color:var(--ink3);flex-wrap:wrap;}
 .bar-legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle;}
 .year-table-wrap{overflow-x:auto;}
@@ -164,13 +163,11 @@ body.year-view .header-band{background:#2a1a3a;}
 .year-table td.pos{color:var(--green);font-weight:700;}
 .year-table td.neg{color:var(--red);font-weight:700;}
 .year-table td.dim{color:var(--ink4);}
-.savings-progress-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:20px;}
+.savings-progress-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:20px;}
 .savings-goal-card{background:var(--cream);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;}
-.sg-label{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:8px;}
-.sg-bar{height:8px;background:var(--rule);border-radius:4px;overflow:hidden;margin-bottom:6px;}
-.sg-bar-fill{height:100%;background:var(--green);border-radius:4px;}
-.sg-nums{display:flex;justify-content:space-between;font-size:11px;color:var(--ink4);}
-.sg-total{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--green);margin-top:4px;}
+.sg-label{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;}
+.sg-total{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:700;color:var(--green);}
+
 @media(max-width:860px){
   .main-grid{grid-template-columns:1fr;}.full-width{grid-column:1;}
   .ticker-inner{grid-template-columns:repeat(3,1fr);}
@@ -195,27 +192,28 @@ body.year-view .header-band{background:#2a1a3a;}
       <select class="hdr-select" id="pastMonths" onchange="loadPastMonth(this.value)" style="font-size:12px;color:#c8b87a;">
         <option value="">📂 Past months</option>
       </select>
-      <span id="syncStatus" style="font-size:11px;font-weight:600;letter-spacing:0.3px;min-width:100px;"></span>
+      <span id="syncStatus" style="font-size:11px;font-weight:600;letter-spacing:0.3px;min-width:90px;color:#9c9284;"></span>
       <button class="btn btn-mode" id="btnMode" onclick="toggleMode()">📊 Enter Actuals</button>
-      <button class="btn btn-mode" id="btnYear" onclick="toggleYearView()" style="background:rgba(180,130,255,0.15);border-color:rgba(180,130,255,0.3);">📅 Year Summary</button>
+      <button class="btn btn-year" onclick="toggleYearView()">📅 Year Summary</button>
       <button class="btn btn-save" onclick="saveBudget()">☁️ Save</button>
-      <button class="btn btn-print" onclick="window.print()">🖨 Print / PDF</button>
+      <button class="btn btn-reset no-print" onclick="resetToDefaults()">↺ Reset</button>
+      <button class="btn btn-print" onclick="window.print()">🖨 Print</button>
     </div>
   </div>
 </div>
 
-<div class="ticker-strip">
+<div class="ticker-strip" id="tickerStrip">
   <div class="ticker-inner">
-    <div class="tick"><div class="tick-label">Total Income</div><div class="tick-val neu" id="tv-income">$0</div><div class="tick-sub">all sources</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-income" style="width:0%;background:var(--green)"></div></div></div>
-    <div class="tick"><div class="tick-label">Budgeted Total</div><div class="tick-val neu" id="tv-fixed">$0</div><div class="tick-sub">all planned spend</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-fixed" style="width:0%;background:var(--red)"></div></div></div>
-    <div class="tick" id="tick-actual" style="display:none"><div class="tick-label">Actual Spent</div><div class="tick-val neu" id="tv-actual">$0</div><div class="tick-sub">entered so far</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-actual" style="width:0%;background:#c07a20"></div></div></div>
-    <div class="tick" id="tick-budget2"><div class="tick-label">Budgeted + Goals</div><div class="tick-val neu" id="tv-budget">$0</div><div class="tick-sub">variable + savings</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-budget" style="width:0%;background:#c07a20"></div></div></div>
-    <div class="tick"><div class="tick-label">Total Allocated</div><div class="tick-val neu" id="tv-alloc">$0</div><div class="tick-sub">all categories</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-alloc" style="width:0%;background:var(--blue)"></div></div></div>
-    <div class="tick"><div class="tick-label">Remaining</div><div class="tick-val neu" id="tv-remain">$0</div><div class="tick-sub" id="ts-remain">after everything</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-remain" style="width:0%;background:var(--green)"></div></div></div>
+    <div class="tick"><div class="tick-label">Total Income</div><div class="tick-val neu" id="tv-income">$0</div><div class="tick-sub">all sources</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-income"></div></div></div>
+    <div class="tick"><div class="tick-label">Budgeted Total</div><div class="tick-val neu" id="tv-fixed">$0</div><div class="tick-sub">all planned spend</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-fixed"></div></div></div>
+    <div class="tick" id="tick-actual" style="display:none"><div class="tick-label">Actual Spent</div><div class="tick-val neu" id="tv-actual">$0</div><div class="tick-sub">entered so far</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-actual"></div></div></div>
+    <div class="tick" id="tick-budget2"><div class="tick-label">Budgeted + Goals</div><div class="tick-val neu" id="tv-budget">$0</div><div class="tick-sub">variable + savings</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-budget"></div></div></div>
+    <div class="tick"><div class="tick-label">Total Allocated</div><div class="tick-val neu" id="tv-alloc">$0</div><div class="tick-sub">all categories</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-alloc"></div></div></div>
+    <div class="tick"><div class="tick-label">Remaining</div><div class="tick-val neu" id="tv-remain">$0</div><div class="tick-sub" id="ts-remain">after everything</div><div class="tick-bar"><div class="tick-bar-fill" id="tb-remain"></div></div></div>
   </div>
 </div>
 
-<div class="page-wrap"><div class="main-grid">
+<div class="page-wrap" id="monthlyView"><div class="main-grid">
 
 <!-- INCOME -->
 <div class="card full-width">
@@ -224,21 +222,21 @@ body.year-view .header-band{background:#2a1a3a;}
     <div class="card-total" id="ct-income">$0.00</div>
   </div>
   <div class="col-heads income-col-heads"><span>Source</span><span style="text-align:right">Pay Periods</span><span style="text-align:right">Per-Paycheck Amount</span></div>
-  <div class="row income-row">
+  <div class="row" style="grid-template-columns:1fr 130px 118px">
     <div style="font-size:13px;color:var(--ink2)">Salary 1</div>
     <select class="pay-sel" id="s1-per" onchange="recalc()">
       <option value="1">1× this month</option><option value="2">2× this month</option><option value="3">3× this month</option><option value="4" selected>4× this month</option><option value="5">5× this month</option>
     </select>
     <input type="number" id="s1-amt" placeholder="0.00" min="0" step="0.01" oninput="recalc()">
   </div>
-  <div class="row income-row">
+  <div class="row" style="grid-template-columns:1fr 130px 118px">
     <div style="font-size:13px;color:var(--ink2)">Salary 2</div>
     <select class="pay-sel" id="s2-per" onchange="recalc()">
       <option value="1">1× this month</option><option value="2">2× this month</option><option value="3">3× this month</option><option value="4" selected>4× this month</option><option value="5">5× this month</option>
     </select>
     <input type="number" id="s2-amt" placeholder="0.00" min="0" step="0.01" oninput="recalc()">
   </div>
-  <div class="row income-row">
+  <div class="row" style="grid-template-columns:1fr 130px 118px">
     <div style="font-size:13px;color:var(--ink2)">Additional Income</div>
     <div style="font-size:11px;color:var(--ink4);text-align:right;padding-right:4px">lump sum</div>
     <input type="number" id="extra-amt" placeholder="0.00" min="0" step="0.01" oninput="recalc()">
@@ -294,7 +292,7 @@ body.year-view .header-band{background:#2a1a3a;}
     <div class="card-title"><div class="card-icon" style="background:#e8f5ee;color:var(--green)">📈</div> Leftover Allocation</div>
     <div class="card-total" id="ct-leftover">$0.00 /mo</div>
   </div>
-  <div class="col-heads alloc-col-heads"><span>Destination (e.g. General Savings, Investments)</span><span style="text-align:right">Amount</span><span></span></div>
+  <div class="col-heads alloc-col-heads"><span>Destination</span><span style="text-align:right">Amount</span><span></span></div>
   <div id="alloc-rows"></div>
   <button class="add-btn no-print" onclick="addAllocRow()">＋ add destination</button>
   <div class="leftover-summary">
@@ -304,7 +302,7 @@ body.year-view .header-band{background:#2a1a3a;}
   </div>
 </div>
 
-<!-- COMPARISON SUMMARY -->
+<!-- COMPARISON -->
 <div class="card compare-panel full-width" id="compare-panel" style="display:none">
   <div class="card-head">
     <div class="card-title"><div class="card-icon" style="background:#f0f0f8;color:#3a3a7a">📊</div> Budget vs. Actual Summary</div>
@@ -332,16 +330,16 @@ body.year-view .header-band{background:#2a1a3a;}
 
 </div></div>
 
-<!-- ══════════════ YEAR SUMMARY VIEW ══════════════ -->
+<!-- YEAR SUMMARY VIEW -->
 <div id="year-view">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
     <div>
-      <div style="font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;color:var(--ink);">Year Summary <span id="yr-title" style="font-style:italic;font-weight:400;color:#7a5ab8;"></span></div>
-      <div style="font-size:11px;color:var(--ink4);margin-top:3px;">Data pulled from your saved months in Google Sheets</div>
+      <div style="font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;color:var(--cream);">Year Summary <span id="yr-title" style="font-style:italic;font-weight:400;color:#c8a8f0;"></span></div>
+      <div style="font-size:11px;color:#9c8ab0;margin-top:3px;">Pulled live from your Google Sheets</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <span style="font-size:11px;color:var(--ink4);">Year:</span>
-      <select id="yrSelect" onchange="loadYearSummary()" style="background:var(--cream2);color:var(--ink);border:1px solid var(--rule);padding:6px 10px;border-radius:4px;font-family:'Source Sans 3',sans-serif;font-size:13px;outline:none;"></select>
+      <span style="font-size:11px;color:#9c8ab0;">Year:</span>
+      <select id="yrSelect" onchange="loadYearSummary()" style="background:rgba(255,255,255,0.1);color:var(--cream);border:1px solid rgba(255,255,255,0.2);padding:6px 10px;border-radius:4px;font-family:'Source Sans 3',sans-serif;font-size:13px;outline:none;"></select>
       <button class="btn" onclick="loadYearSummary()" style="background:#7a5ab8;color:#fff;border:none;">↻ Refresh</button>
     </div>
   </div>
@@ -353,7 +351,7 @@ body.year-view .header-band{background:#2a1a3a;}
   </div>
   <div class="year-card">
     <div class="year-card-head"><div class="year-card-title">📊 Income vs. Spend by Month</div></div>
-    <div class="bar-chart-wrap"><div class="bar-chart" id="yr-bar-chart"><div class="year-loading">Load a year to see chart</div></div></div>
+    <div class="bar-chart-wrap"><div class="bar-chart" id="yr-bar-chart"><div class="year-empty">Select a year and click Refresh</div></div></div>
     <div class="bar-legend">
       <span><span class="bar-legend-dot" style="background:#2d6a4f;"></span>Income</span>
       <span><span class="bar-legend-dot" style="background:#c0392b;"></span>Budgeted</span>
@@ -362,91 +360,245 @@ body.year-view .header-band{background:#2a1a3a;}
   </div>
   <div class="year-card">
     <div class="year-card-head"><div class="year-card-title">📋 Budgeted vs. Actual by Month</div></div>
-    <div class="year-table-wrap"><table class="year-table" id="yr-compare-table"><tr><td class="year-loading">Load a year to see data</td></tr></table></div>
+    <div class="year-table-wrap"><table class="year-table" id="yr-compare-table"><tr><td colspan="5" class="year-empty">Select a year and click Refresh</td></tr></table></div>
   </div>
   <div class="year-card">
     <div class="year-card-head"><div class="year-card-title">🗂 Category Totals Across the Year</div></div>
-    <div class="year-table-wrap"><table class="year-table" id="yr-category-table"><tr><td class="year-loading">Load a year to see data</td></tr></table></div>
+    <div class="year-table-wrap"><table class="year-table" id="yr-category-table"><tr><td colspan="4" class="year-empty">Select a year and click Refresh</td></tr></table></div>
   </div>
   <div class="year-card">
     <div class="year-card-head">
       <div class="year-card-title">🎯 Running Savings Total</div>
       <div style="font-size:12px;color:var(--green);font-weight:600;" id="yr-savings-total-hd"></div>
     </div>
-    <div class="savings-progress-grid" id="yr-savings-grid"><div class="year-loading">Load a year to see savings</div></div>
+    <div class="savings-progress-grid" id="yr-savings-grid"><div class="year-empty">Select a year and click Refresh</div></div>
   </div>
 </div>
 
-<div class="toast" id="toast">✓ Budget saved</div>
+<div class="toast" id="toast"></div>
 
 <script>
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const PALETTE=['#2d6a4f','#1a4a7a','#8b2020','#b8860b','#4a5568','#744210','#1a6363','#4a2580','#5d4037','#2c5282','#6b4226','#1a5276','#3d5a80','#5c4033','#2e4057'];
-let uid=0,trackingMode=false;
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxEHIhKLJtd7gHe9TRMLOzoCE-bgAXKM7hV7W9PveyGEk4J_UywPPnyzk0bimkzkfQ/exec';
+const SECRET='j$Budget$app$2026!mDbR94';
+
+let uid=0, trackingMode=false, yearViewActive=false;
 const newId=()=>++uid;
 let state={expectedRows:[],budgetedRows:[],savingsRows:[],allocRows:[]};
 
+// ── DEFAULTS ──────────────────────────────
+const DEFAULT_EXPECTED=[
+  {label:'Home (Mortgage/Rent)',nm:false},{label:'Utilities',nm:false},{label:'Insurance',nm:true},
+  {label:'Property Taxes',nm:true},{label:'Car Insurance',nm:true},{label:'Car Repairs',nm:true},
+  {label:'Health Insurance',nm:false},{label:'Giving',nm:false},
+];
+const DEFAULT_BUDGETED=[
+  {label:'Gas',nm:false},{label:'Groceries',nm:false},{label:'Eating Out',nm:false},
+  {label:'Fun Money',nm:false},{label:'Clothes',nm:true},{label:'Unexpected',nm:false},
+];
+const DEFAULT_SAVINGS=['Vacation Fund','Future Car / Tires','Future Medical'];
+const DEFAULT_ALLOC=['General Savings','Investments'];
+
+function loadDefaults(){
+  state={expectedRows:[],budgetedRows:[],savingsRows:[],allocRows:[]};
+  uid=0;
+  DEFAULT_EXPECTED.forEach(r=>state.expectedRows.push({id:newId(),label:r.label,amount:'',actual:'',nm:r.nm}));
+  DEFAULT_BUDGETED.forEach(r=>state.budgetedRows.push({id:newId(),label:r.label,amount:'',actual:'',nm:r.nm}));
+  DEFAULT_SAVINGS.forEach(l=>state.savingsRows.push({id:newId(),label:l,amount:''}));
+  DEFAULT_ALLOC.forEach(l=>state.allocRows.push({id:newId(),label:l,amount:''}));
+  renderAll();
+}
+
+function renderAll(){
+  renderExpenseRows('expected');
+  renderExpenseRows('budgeted');
+  renderSavingsRows();
+  renderAllocRows();
+}
+
+// ── INIT ──────────────────────────────────
 async function init(){
-  const ms=document.getElementById('selMonth'),ys=document.getElementById('selYear');
+  const ms=document.getElementById('selMonth');
+  const ys=document.getElementById('selYear');
   MONTHS.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.textContent=m;ms.appendChild(o);});
-  const now=new Date();ms.value=now.getMonth();
-  for(let y=now.getFullYear()-2;y<=now.getFullYear()+5;y++){const o=document.createElement('option');o.value=y;o.textContent=y;ys.appendChild(o);}
+  const now=new Date();
+  ms.value=now.getMonth();
+  for(let y=now.getFullYear()-3;y<=now.getFullYear()+5;y++){
+    const o=document.createElement('option');o.value=y;o.textContent=y;ys.appendChild(o);
+  }
   ys.value=now.getFullYear();
 
-  // Pre-populate year summary selector
-  const yrSel = document.getElementById('yrSelect');
-  for (let y = now.getFullYear() - 3; y <= now.getFullYear() + 1; y++) {
-    const o = document.createElement('option');
-    o.value = y; o.textContent = y;
-    if (y === now.getFullYear()) o.selected = true;
+  // Year selector for year view
+  const yrSel=document.getElementById('yrSelect');
+  for(let y=now.getFullYear()-3;y<=now.getFullYear()+1;y++){
+    const o=document.createElement('option');o.value=y;o.textContent=y;
+    if(y===now.getFullYear())o.selected=true;
     yrSel.appendChild(o);
   }
 
-  // Populate past months dropdown from Sheets
+  ms.addEventListener('change',tryLoadPeriod);
+  ys.addEventListener('change',tryLoadPeriod);
+
   await refreshMonthList();
-
-  // Try loading current month from Sheets, fall back to localStorage, then defaults
-  const {m,y}=getMonthYear();
-  const sheetsData=await loadFromSheets(m,y);
-  if(sheetsData && sheetsData.expectedRows){ applySavedData(sheetsData); return; }
-
-  const local=localStorage.getItem(storageKey());
-  if(local){ try{ applySavedData(JSON.parse(local)); return; }catch(e){} }
-
-  // Fresh defaults
-  [
-    {label:'Home (Mortgage/Rent)',nm:false},{label:'Utilities',nm:false},{label:'Insurance',nm:true},
-    {label:'Property Taxes',nm:true},{label:'Car Insurance',nm:true},{label:'Car Repairs',nm:true},
-    {label:'Health Insurance',nm:false},{label:'Giving',nm:false},
-  ].forEach(r=>addExpenseRow('expected',r.label,'','',r.nm));
-  [
-    {label:'Gas',nm:false},{label:'Groceries',nm:false},{label:'Eating Out',nm:false},
-    {label:'Fun Money',nm:false},{label:'Clothes',nm:true},{label:'Unexpected',nm:false},
-  ].forEach(r=>addExpenseRow('budgeted',r.label,'','',r.nm));
-  addSavingsRow('Vacation Fund','');addSavingsRow('Future Car / Tires','');addSavingsRow('Future Medical','');
-  addAllocRow('General Savings','');addAllocRow('Investments','');
+  await tryLoadPeriod();
 }
 
-function toggleMode(){
-  trackingMode=!trackingMode;
-  document.body.classList.toggle('tracking-mode',trackingMode);
-  const badge=document.getElementById('modeBadge'),btn=document.getElementById('btnMode');
-  const cp=document.getElementById('compare-panel'),ta=document.getElementById('tick-actual'),tb2=document.getElementById('tick-budget2');
-  if(trackingMode){
-    badge.className='mode-badge track';badge.textContent='✏️ Tracking Actuals';
-    btn.textContent='📋 Back to Planning';cp.style.display='';ta.style.display='';tb2.style.display='none';
-  } else {
-    badge.className='mode-badge plan';badge.textContent='📋 Planning';
-    btn.textContent='📊 Enter Actuals';cp.style.display='none';ta.style.display='none';tb2.style.display='';
+async function tryLoadPeriod(){
+  const m=parseInt(document.getElementById('selMonth').value);
+  const y=parseInt(document.getElementById('selYear').value);
+  const monthName=MONTHS[m];
+
+  // Reset income fields
+  document.getElementById('s1-per').value=4;
+  document.getElementById('s1-amt').value='';
+  document.getElementById('s2-per').value=4;
+  document.getElementById('s2-amt').value='';
+  document.getElementById('extra-amt').value='';
+  if(trackingMode)toggleMode();
+
+  // Try Sheets
+  const sheetsData=await loadFromSheets(monthName,y);
+  if(sheetsData && sheetsData.expectedRows && sheetsData.expectedRows.length>0){
+    applySavedData(sheetsData);
+    return;
   }
-  renderExpenseRows('expected');renderExpenseRows('budgeted');recalc();
+  // Try localStorage
+  const key=`budget-${y}-${m}`;
+  const local=localStorage.getItem(key);
+  if(local){
+    try{
+      const parsed=JSON.parse(local);
+      if(parsed.expectedRows && parsed.expectedRows.length>0){
+        applySavedData(parsed);
+        return;
+      }
+    }catch(e){}
+  }
+  // Nothing saved — show defaults
+  loadDefaults();
 }
 
-function addExpenseRow(section,label='',amount='',actual='',nm=false){
-  const id=newId(),arr=section==='expected'?state.expectedRows:state.budgetedRows;
-  arr.push({id,label,amount,actual,nm});renderExpenseRows(section);return id;
+function applySavedData(d){
+  state={expectedRows:[],budgetedRows:[],savingsRows:[],allocRows:[]};
+  uid=0;
+  document.getElementById('s1-per').value=d.s1per||4;
+  document.getElementById('s1-amt').value=d.s1amt||'';
+  document.getElementById('s2-per').value=d.s2per||4;
+  document.getElementById('s2-amt').value=d.s2amt||'';
+  document.getElementById('extra-amt').value=d.extraAmt||'';
+  (d.expectedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.expectedRows.push({...r,actual:r.actual||''});});
+  (d.budgetedRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.budgetedRows.push({...r,actual:r.actual||''});});
+  (d.savingsRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.savingsRows.push({...r});});
+  (d.allocRows||[]).forEach(r=>{uid=Math.max(uid,r.id);state.allocRows.push({...r});});
+  renderAll();
+  if(d.trackingMode && !trackingMode)toggleMode();
 }
 
+function resetToDefaults(){
+  if(!confirm('Clear this month and load default categories?\n\nYour saved data in Google Sheets will NOT be changed unless you save again.'))return;
+  document.getElementById('s1-per').value=4;document.getElementById('s1-amt').value='';
+  document.getElementById('s2-per').value=4;document.getElementById('s2-amt').value='';
+  document.getElementById('extra-amt').value='';
+  if(trackingMode)toggleMode();
+  loadDefaults();
+  showToast('Reset to default categories');
+}
+
+// ── GOOGLE SHEETS ─────────────────────────
+function getStorageKey(){
+  const m=document.getElementById('selMonth').value;
+  const y=document.getElementById('selYear').value;
+  return `budget-${y}-${m}`;
+}
+
+function setSyncStatus(status){
+  const el=document.getElementById('syncStatus');
+  if(!el)return;
+  const map={saving:{text:'☁️ Saving…',color:'#b8860b'},saved:{text:'✓ Synced',color:'#2d6a4f'},loading:{text:'☁️ Loading…',color:'#9c9284'},error:{text:'⚠️ Offline',color:'#8b2020'},'':{}};
+  const s=map[status]||{};
+  el.textContent=s.text||''; el.style.color=s.color||'';
+}
+
+function showToast(msg,isError=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=isError?'#8b2020':'#1c1a16';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+async function saveBudget(){
+  const m=parseInt(document.getElementById('selMonth').value);
+  const y=parseInt(document.getElementById('selYear').value);
+  const data={
+    month:MONTHS[m],year:y,
+    s1per:document.getElementById('s1-per').value,
+    s1amt:document.getElementById('s1-amt').value,
+    s2per:document.getElementById('s2-per').value,
+    s2amt:document.getElementById('s2-amt').value,
+    extraAmt:document.getElementById('extra-amt').value,
+    trackingMode,
+    expectedRows:state.expectedRows,
+    budgetedRows:state.budgetedRows,
+    savingsRows:state.savingsRows,
+    allocRows:state.allocRows,
+  };
+  localStorage.setItem(getStorageKey(),JSON.stringify(data));
+  setSyncStatus('saving');
+  try{
+    const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({...data,secret:SECRET})});
+    const json=await res.json();
+    if(json.status==='ok'){setSyncStatus('saved');showToast('✓ Saved to Google Sheets');await refreshMonthList();}
+    else throw new Error();
+  }catch(e){setSyncStatus('error');showToast('Saved locally — Google Sheets unreachable',true);}
+}
+
+async function loadFromSheets(monthName,year){
+  setSyncStatus('loading');
+  try{
+    const url=`${SCRIPT_URL}?month=${encodeURIComponent(monthName)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
+    const res=await fetch(url);
+    const json=await res.json();
+    if(json.status==='empty'||json.status==='unauthorized'){setSyncStatus('');return null;}
+    setSyncStatus('saved');
+    return json;
+  }catch(e){setSyncStatus('error');return null;}
+}
+
+async function refreshMonthList(){
+  try{
+    const url=`${SCRIPT_URL}?list=1&secret=${encodeURIComponent(SECRET)}`;
+    const res=await fetch(url);
+    const json=await res.json();
+    if(json.tabs){
+      const sel=document.getElementById('pastMonths');
+      sel.innerHTML='<option value="">📂 Past months</option>';
+      json.tabs.forEach(tab=>{const o=document.createElement('option');o.value=tab;o.textContent=tab;sel.appendChild(o);});
+    }
+  }catch(e){}
+}
+
+async function loadPastMonth(val){
+  if(!val)return;
+  const parts=val.split('-');
+  if(parts.length<2)return;
+  const monthName=parts[0], year=parseInt(parts[1]);
+  const mIdx=MONTHS.indexOf(monthName);
+  if(mIdx===-1)return;
+  document.getElementById('selMonth').value=mIdx;
+  document.getElementById('selYear').value=year;
+  document.getElementById('s1-per').value=4;document.getElementById('s1-amt').value='';
+  document.getElementById('s2-per').value=4;document.getElementById('s2-amt').value='';
+  document.getElementById('extra-amt').value='';
+  if(trackingMode)toggleMode();
+  const data=await loadFromSheets(monthName,year);
+  if(data && data.expectedRows && data.expectedRows.length>0){applySavedData(data);}
+  else{loadDefaults();}
+  document.getElementById('pastMonths').value='';
+}
+
+// ── ROW RENDERING ─────────────────────────
 function renderExpenseRows(section){
   const arr=section==='expected'?state.expectedRows:state.budgetedRows;
   const container=document.getElementById(section+'-rows');
@@ -455,7 +607,7 @@ function renderExpenseRows(section){
   if(trackingMode){
     colHead.style.gridTemplateColumns='18px 1fr 90px 90px 68px 22px';
     colHead.innerHTML='<span>★</span><span>Item</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span>';
-  } else {
+  }else{
     colHead.style.gridTemplateColumns='18px 1fr 105px 22px';
     colHead.innerHTML='<span title="Non-monthly">★</span><span>Item</span><span style="text-align:right">Budgeted</span><span></span>';
   }
@@ -470,13 +622,13 @@ function renderExpenseRows(section){
         <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
         <div class="row-name-wrap">
           <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Expense name…" oninput="updateField('${section}',${r.id},'label',this.value)">
-          ${r.nm?'<span class="nm-tag">★</span>':''}
+          ${r.nm?'<span class="nm-tag">★ accrual</span>':''}
         </div>
         <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateField('${section}',${r.id},'amount',this.value)">
         <input type="number" value="${r.actual}" placeholder="0.00" min="0" step="0.01" class="actual-input${act>bud&&bud>0?' over':''}" oninput="updateField('${section}',${r.id},'actual',this.value)">
         <div class="diff-val ${dc}">${ds}</div>
         <button class="del-btn no-print" onclick="deleteExpenseRow('${section}',${r.id})">×</button>`;
-    } else {
+    }else{
       div.style.gridTemplateColumns='18px 1fr 105px 22px';
       div.innerHTML=`
         <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
@@ -492,127 +644,170 @@ function renderExpenseRows(section){
   recalc();
 }
 
+function renderSavingsRows(){
+  const container=document.getElementById('savings-rows');container.innerHTML='';
+  state.savingsRows.forEach(r=>{
+    const div=document.createElement('div');div.className='row';div.style.gridTemplateColumns='1fr 105px 22px';
+    div.innerHTML=`
+      <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Goal name…" oninput="updateSavings(${r.id},'label',this.value)">
+      <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateSavings(${r.id},'amount',this.value)">
+      <button class="del-btn no-print" onclick="deleteSavings(${r.id})">×</button>`;
+    container.appendChild(div);
+  });
+  recalc();
+}
+
+function renderAllocRows(){
+  const container=document.getElementById('alloc-rows');container.innerHTML='';
+  state.allocRows.forEach(r=>{
+    const div=document.createElement('div');div.className='row';div.style.gridTemplateColumns='1fr 105px 22px';
+    div.innerHTML=`
+      <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="e.g. General Savings…" oninput="updateAlloc(${r.id},'label',this.value)">
+      <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateAlloc(${r.id},'amount',this.value)">
+      <button class="del-btn no-print" onclick="deleteAlloc(${r.id})">×</button>`;
+    container.appendChild(div);
+  });
+  recalc();
+}
+
+function renderNM(){
+  const nmItems=[...state.expectedRows,...state.budgetedRows].filter(r=>r.nm);
+  const list=document.getElementById('nm-list');
+  const sub=document.getElementById('nm-subtotal');
+  list.innerHTML='';
+  if(!nmItems.length){
+    list.innerHTML='<div class="nm-empty">Check the ★ checkbox on any expense to track it here as a monthly set-aside.</div>';
+    sub.style.display='none';document.getElementById('ct-nm').textContent='$0.00';return;
+  }
+  let total=0;
+  nmItems.forEach(r=>{
+    const v=parseFloat(r.amount)||0;total+=v;
+    const div=document.createElement('div');div.className='nm-row';
+    div.innerHTML=`<span>${esc(r.label)||'Unnamed'}</span><span class="nm-amt">${fmt(v)}</span>`;
+    list.appendChild(div);
+  });
+  sub.style.display='';document.getElementById('nm-sub-val').textContent=fmt(total);
+  document.getElementById('ct-nm').textContent=fmt(total);
+}
+
+// ── ADD / DELETE / UPDATE ─────────────────
+function addExpenseRow(section,label='',amount='',actual='',nm=false){
+  const arr=section==='expected'?state.expectedRows:state.budgetedRows;
+  arr.push({id:newId(),label,amount,actual,nm});
+  renderExpenseRows(section);
+}
 function deleteExpenseRow(section,id){
   if(section==='expected')state.expectedRows=state.expectedRows.filter(r=>r.id!==id);
   else state.budgetedRows=state.budgetedRows.filter(r=>r.id!==id);
   renderExpenseRows(section);
 }
-
 function updateField(section,id,field,val){
   const arr=section==='expected'?state.expectedRows:state.budgetedRows;
   const r=arr.find(r=>r.id===id);if(!r)return;r[field]=val;
   if(field==='actual'){
-    const inp=document.querySelector('#er-'+id+' input.actual-input');
+    const inp=document.querySelector(`#er-${id} input.actual-input`);
     if(inp){const b=parseFloat(r.amount)||0,a=parseFloat(val)||0;inp.classList.toggle('over',a>b&&b>0);}
-    const diffEl=document.querySelector('#er-'+id+' .diff-val');
-    if(diffEl){
-      const b=parseFloat(r.amount)||0,a=parseFloat(val)||0,d=b-a;
+    const diffEl=document.querySelector(`#er-${id} .diff-val`);
+    if(diffEl){const b=parseFloat(r.amount)||0,a=parseFloat(val)||0,d=b-a;
       if(a===0){diffEl.textContent='—';diffEl.className='diff-val diff-zero';}
       else{diffEl.textContent=(d>=0?'+':'')+fmtRaw(d);diffEl.className='diff-val '+(d>=0?'diff-pos':'diff-neg');}
     }
     recalc();
-  } else if(field==='label'){renderNM();recalc();}
+  }else if(field==='label'){renderNM();recalc();}
   else recalc();
 }
-
 function toggleNM(section,id,checked){
   const arr=section==='expected'?state.expectedRows:state.budgetedRows;
   const r=arr.find(r=>r.id===id);if(r){r.nm=checked;renderExpenseRows(section);}
 }
-
-function addSavingsRow(label='',amount=''){
-  const id=newId();state.savingsRows.push({id,label,amount});renderSavingsRows();
-}
-function renderSavingsRows(){
-  const c=document.getElementById('savings-rows');c.innerHTML='';
-  state.savingsRows.forEach(r=>{
-    const div=document.createElement('div');div.className='row goal-row';
-    div.innerHTML=`<input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Goal name…" oninput="updateSavings(${r.id},'label',this.value)"><input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateSavings(${r.id},'amount',this.value)"><button class="del-btn no-print" onclick="deleteSavings(${r.id})">×</button>`;
-    c.appendChild(div);
-  });recalc();
-}
-function updateSavings(id,f,v){const r=state.savingsRows.find(r=>r.id===id);if(r){r[f]=v;recalc();}}
+function addSavingsRow(label='',amount=''){state.savingsRows.push({id:newId(),label,amount});renderSavingsRows();}
 function deleteSavings(id){state.savingsRows=state.savingsRows.filter(r=>r.id!==id);renderSavingsRows();}
-
-function addAllocRow(label='',amount=''){
-  const id=newId();state.allocRows.push({id,label,amount});renderAllocRows();
-}
-function renderAllocRows(){
-  const c=document.getElementById('alloc-rows');c.innerHTML='';
-  state.allocRows.forEach(r=>{
-    const div=document.createElement('div');div.className='row alloc-row';
-    div.innerHTML=`<input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="e.g. General Savings, Index Fund…" oninput="updateAlloc(${r.id},'label',this.value)"><input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateAlloc(${r.id},'amount',this.value)"><button class="del-btn no-print" onclick="deleteAlloc(${r.id})">×</button>`;
-    c.appendChild(div);
-  });recalc();
-}
-function updateAlloc(id,f,v){const r=state.allocRows.find(r=>r.id===id);if(r){r[f]=v;recalc();}}
+function updateSavings(id,field,val){const r=state.savingsRows.find(r=>r.id===id);if(r){r[field]=val;recalc();}}
+function addAllocRow(label='',amount=''){state.allocRows.push({id:newId(),label,amount});renderAllocRows();}
 function deleteAlloc(id){state.allocRows=state.allocRows.filter(r=>r.id!==id);renderAllocRows();}
+function updateAlloc(id,field,val){const r=state.allocRows.find(r=>r.id===id);if(r){r[field]=val;recalc();}}
 
-function renderNM(){
-  const items=[...state.expectedRows.filter(r=>r.nm),...state.budgetedRows.filter(r=>r.nm)];
-  const list=document.getElementById('nm-list'),sub=document.getElementById('nm-subtotal');
-  list.innerHTML='';
-  if(!items.length){list.innerHTML='<div class="nm-empty">Check the ★ checkbox on any expense to track it here as a monthly set-aside.</div>';sub.style.display='none';document.getElementById('ct-nm').textContent='$0.00';return;}
-  const total=items.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
-  items.forEach(r=>{const d=document.createElement('div');d.className='nm-row';d.innerHTML=`<span>${esc(r.label||'Unnamed')}</span><span class="nm-amt">${fmt(parseFloat(r.amount)||0)}</span>`;list.appendChild(d);});
-  sub.style.display='flex';document.getElementById('nm-sub-val').textContent=fmt(total);document.getElementById('ct-nm').textContent=fmt(total);
+// ── TOGGLE MODE ───────────────────────────
+function toggleMode(){
+  trackingMode=!trackingMode;
+  document.body.classList.toggle('tracking-mode',trackingMode);
+  const badge=document.getElementById('modeBadge'),btn=document.getElementById('btnMode');
+  const cp=document.getElementById('compare-panel'),ta=document.getElementById('tick-actual'),tb2=document.getElementById('tick-budget2');
+  if(trackingMode){
+    badge.className='mode-badge track';badge.textContent='✏️ Tracking Actuals';
+    btn.textContent='📋 Back to Planning';cp.style.display='';ta.style.display='';tb2.style.display='none';
+  }else{
+    badge.className='mode-badge plan';badge.textContent='📋 Planning';
+    btn.textContent='📊 Enter Actuals';cp.style.display='none';ta.style.display='none';tb2.style.display='';
+  }
+  renderExpenseRows('expected');renderExpenseRows('budgeted');
 }
 
+// ── RECALC ────────────────────────────────
 function recalc(){
   const s1=(parseFloat(document.getElementById('s1-amt').value)||0)*parseInt(document.getElementById('s1-per').value||4);
   const s2=(parseFloat(document.getElementById('s2-amt').value)||0)*parseInt(document.getElementById('s2-per').value||4);
-  const ex=parseFloat(document.getElementById('extra-amt').value)||0;
-  const totalIncome=s1+s2+ex;
-  const sumRows=arr=>arr.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
-  const sumActual=arr=>arr.reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
-  const expectedTotal=sumRows(state.expectedRows),budgetedTotal=sumRows(state.budgetedRows);
-  const savingsTotal=sumRows(state.savingsRows),allocTotal=sumRows(state.allocRows);
-  const totalBudgeted=expectedTotal+budgetedTotal+savingsTotal+allocTotal;
-  const remaining=totalIncome-totalBudgeted,unallocated=remaining;
-  const actualExpected=sumActual(state.expectedRows),actualBudgeted=sumActual(state.budgetedRows);
-  const totalActual=actualExpected+actualBudgeted,actualDiff=totalBudgeted-totalActual;
+  const extra=parseFloat(document.getElementById('extra-amt').value)||0;
+  const totalIncome=s1+s2+extra;
+  document.getElementById('ct-income').textContent=fmt(totalIncome);
 
-  setEl('ct-income',fmt(totalIncome));setEl('ct-expected',fmt(expectedTotal));
-  setEl('ct-budgeted',fmt(budgetedTotal));setEl('ct-savings',fmt(savingsTotal)+' /mo');setEl('ct-leftover',fmt(allocTotal)+' /mo');
-  setTicker('tv-income',totalIncome,'neu');setTicker('tv-fixed',totalBudgeted,'neu');
-  setTicker('tv-budget',budgetedTotal+savingsTotal,'neu');
-  setTicker('tv-actual',totalActual,totalActual>totalBudgeted?'neg':'neu');
-  setTicker('tv-alloc',totalBudgeted,totalBudgeted>totalIncome?'neg':'neu');
-  setTicker('tv-remain',remaining,remaining>=0?'pos':'neg');
-  setEl('ts-remain',remaining>=0?'after everything':'OVER BUDGET');
+  const expTotal=state.expectedRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+  const budTotal=state.budgetedRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+  const savTotal=state.savingsRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+  const allocTotal=state.allocRows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+  const totalBudgeted=expTotal+budTotal;
+  const totalBudgetPlusGoals=totalBudgeted+savTotal;
+  const totalAllocated=totalBudgetPlusGoals+allocTotal;
+  const remaining=totalIncome-totalAllocated;
 
-  const max=Math.max(totalIncome,totalBudgeted,1);
-  setMeter('tb-income',totalIncome/max*100,'var(--green)');setMeter('tb-fixed',totalBudgeted/max*100,'var(--red)');
-  setMeter('tb-budget',(budgetedTotal+savingsTotal)/max*100,'#c07a20');
-  setMeter('tb-actual',totalActual/max*100,totalActual>totalBudgeted?'var(--red)':'#c07a20');
-  setMeter('tb-alloc',totalBudgeted/max*100,'var(--blue)');
-  setMeter('tb-remain',Math.abs(remaining)/Math.max(totalIncome,1)*100,remaining>=0?'var(--green)':'var(--red)');
+  document.getElementById('ct-expected').textContent=fmt(expTotal);
+  document.getElementById('ct-budgeted').textContent=fmt(budTotal);
+  document.getElementById('ct-savings').textContent=fmt(savTotal)+' /mo';
+  document.getElementById('ct-leftover').textContent=fmt(allocTotal)+' /mo';
 
-  setEl('ls-income',fmt(totalIncome));
-  const ue=document.getElementById('ls-used');ue.textContent=fmt(totalBudgeted);ue.className='ls-val '+(totalBudgeted>totalIncome?'neg':'neu');
+  setTicker('tv-income',totalIncome,totalIncome>0?'pos':'neu');
+  setTicker('tv-fixed',totalBudgeted,'neu');
+  setTicker('tv-budget',totalBudgetPlusGoals,'neu');
+  setTicker('tv-alloc',totalAllocated,'neu');
+  setTicker('tv-remain',remaining,remaining<0?'neg':remaining>0?'pos':'neu');
+  setMeter('tb-income',100,'var(--green)');
+  setMeter('tb-fixed',totalIncome>0?(totalBudgeted/totalIncome)*100:'0','var(--red)');
+  setMeter('tb-budget',totalIncome>0?(totalBudgetPlusGoals/totalIncome)*100:'0','#c07a20');
+  setMeter('tb-alloc',totalIncome>0?(totalAllocated/totalIncome)*100:'0','var(--blue)');
+  setMeter('tb-remain',totalIncome>0?(Math.abs(remaining)/totalIncome)*100:'0',remaining<0?'var(--red)':'var(--green)');
+
+  const unallocated=totalIncome-totalAllocated;
+  document.getElementById('ls-income').textContent=fmt(totalIncome);
+  document.getElementById('ls-used').textContent=fmt(totalAllocated);
   const ua=document.getElementById('ls-unalloc');ua.textContent=fmt(unallocated);ua.className='ls-val '+(unallocated<0?'neg':unallocated>0?'pos':'neu');
 
   if(trackingMode){
-    setEl('cmp-budgeted',fmt(totalBudgeted));setEl('cmp-actual',fmt(totalActual));
+    const totalActual=[...state.expectedRows,...state.budgetedRows].reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
+    setTicker('tv-actual',totalActual,'neu');
+    setMeter('tb-actual',totalIncome>0?(totalActual/totalIncome)*100:'0','#c07a20');
+    document.getElementById('cmp-budgeted').textContent=fmt(totalBudgeted);
+    document.getElementById('cmp-actual').textContent=fmt(totalActual);
+    const actualDiff=totalBudgeted-totalActual;
     const de=document.getElementById('cmp-diff');
     de.textContent=totalActual===0?'—':(actualDiff>=0?'+':'')+fmtRaw(actualDiff);
     de.className='cmp-val '+(totalActual===0?'neu':actualDiff>=0?'pos':'neg');
-    setEl('cmp-diff-sub',totalActual===0?'enter actuals above':actualDiff>=0?'under budget 👍':'over budget ⚠️');
-    const allRows=[...state.expectedRows,...state.budgetedRows];
-    const overItems=allRows.filter(r=>{const b=parseFloat(r.amount)||0,a=parseFloat(r.actual)||0;return a>0&&b>0&&a>b;});
+    document.getElementById('cmp-diff-sub').textContent=totalActual===0?'enter actuals above':actualDiff>=0?'under budget 👍':'over budget ⚠️';
+    const overItems=[...state.expectedRows,...state.budgetedRows].filter(r=>{const b=parseFloat(r.amount)||0,a=parseFloat(r.actual)||0;return a>0&&b>0&&a>b;});
     const oc=document.getElementById('cmp-over-count');oc.textContent=overItems.length;oc.className='cmp-val '+(overItems.length>0?'neg':'pos');
     document.getElementById('cmp-over-list').textContent=overItems.map(r=>r.label||'Unnamed').join(', ');
   }
-  renderNM();renderChart(totalIncome);
+  renderNM();
+  renderChart(totalIncome);
 }
 
+// ── CHART ─────────────────────────────────
 function renderChart(income){
   const canvas=document.getElementById('pie'),ctx=canvas.getContext('2d'),legend=document.getElementById('chart-legend');
   legend.innerHTML='';
   const slices=[];
-  state.expectedRows.forEach(r=>{const v=parseFloat(r.amount)||0;if(v>0)slices.push({label:r.label||'Expected Item',val:v});});
-  state.budgetedRows.forEach(r=>{const v=parseFloat(r.amount)||0;if(v>0)slices.push({label:r.label||'Budgeted Item',val:v});});
-  state.savingsRows.forEach(r=>{const v=parseFloat(r.amount)||0;if(v>0)slices.push({label:r.label||'Savings Goal',val:v});});
+  state.expectedRows.forEach(r=>{const v=parseFloat(r.amount)||0;if(v>0)slices.push({label:r.label||'Expected',val:v});});
+  state.budgetedRows.forEach(r=>{const v=parseFloat(r.amount)||0;if(v>0)slices.push({label:r.label||'Budgeted',val:v});});
+  state.savingsRows.forEach(r=>{const v=parseFloat(r.amount)||0;if(v>0)slices.push({label:r.label||'Savings',val:v});});
   state.allocRows.forEach(r=>{const v=parseFloat(r.amount)||0;if(v>0)slices.push({label:r.label||'Allocation',val:v});});
   const total=slices.reduce((a,s)=>a+s.val,0),unalloc=income-total;
   if(unalloc>0)slices.push({label:'Unallocated',val:unalloc,unalloc:true});
@@ -637,398 +832,137 @@ function renderChart(income){
   });
 }
 
-// ══════════════════════════════════════════
-// GOOGLE SHEETS SYNC
-// ══════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEHIhKLJtd7gHe9TRMLOzoCE-bgAXKM7hV7W9PveyGEk4J_UywPPnyzk0bimkzkfQ/exec';
-const SECRET = 'j$Budget$app$2026!mDbR94';
-
-function getMonthYear(){
-  const m=document.getElementById('selMonth')?.value??0;
-  const y=document.getElementById('selYear')?.value??new Date().getFullYear();
-  return {month: MONTHS[parseInt(m)], year: parseInt(y), m, y};
-}
-function storageKey(){const {m,y}=getMonthYear();return `budget-${y}-${m}`;}
-
-function showToast(msg, isError=false){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.style.background=isError?'#8b2020':'#1c1a16';
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
-}
-
-function setSyncStatus(status){
-  // status: 'saving' | 'saved' | 'loading' | 'error' | ''
-  const el=document.getElementById('syncStatus');
-  if(!el)return;
-  const map={
-    saving: {text:'☁️ Saving…',      color:'#b8860b'},
-    saved:  {text:'✓ Synced',         color:'#2d6a4f'},
-    loading:{text:'☁️ Loading…',      color:'#1a4a7a'},
-    error:  {text:'⚠️ Offline — saved locally', color:'#8b2020'},
-    '':     {text:'',                 color:'transparent'},
-  };
-  const s=map[status]||map[''];
-  el.textContent=s.text; el.style.color=s.color;
-}
-
-async function saveBudget(){
-  const {month,year,m,y}=getMonthYear();
-  const data={
-    month, year,
-    s1per:document.getElementById('s1-per').value,
-    s1amt:document.getElementById('s1-amt').value,
-    s2per:document.getElementById('s2-per').value,
-    s2amt:document.getElementById('s2-amt').value,
-    extraAmt:document.getElementById('extra-amt').value,
-    trackingMode,
-    expectedRows:state.expectedRows,
-    budgetedRows:state.budgetedRows,
-    savingsRows:state.savingsRows,
-    allocRows:state.allocRows,
-  };
-
-  // Always save locally first
-  localStorage.setItem(storageKey(), JSON.stringify(data));
-
-  // Then try Google Sheets
-  setSyncStatus('saving');
-  try {
-    const res = await fetch(SCRIPT_URL, {
-      method:'POST',
-      body: JSON.stringify({...data, secret: SECRET}),
-    });
-    const json = await res.json();
-    if(json.status==='ok'){
-      setSyncStatus('saved');
-      showToast('✓ Saved to Google Sheets');
-      await refreshMonthList();
-    } else {
-      throw new Error('bad response');
-    }
-  } catch(e){
-    setSyncStatus('error');
-    showToast('Saved locally — Google Sheets unreachable', true);
-  }
-}
-
-async function loadFromSheets(m, y){
-  const month=MONTHS[parseInt(m)], year=parseInt(y);
-  setSyncStatus('loading');
-  try {
-    const url=`${SCRIPT_URL}?month=${encodeURIComponent(month)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
-    const res = await fetch(url);
-    const json = await res.json();
-    if(json.status==='empty') { setSyncStatus(''); return null; }
-    setSyncStatus('saved');
-    return json;
-  } catch(e){
-    setSyncStatus('error');
-    return null;
-  }
-}
-
-async function refreshMonthList(){
-  // Load list of saved months from sheets and populate the past months dropdown
-  try {
-    const url=`${SCRIPT_URL}?list=1&secret=${encodeURIComponent(SECRET)}`;
-    const res = await fetch(url);
-    const json = await res.json();
-    if(json.tabs){
-      const sel=document.getElementById('pastMonths');
-      if(!sel)return;
-      sel.innerHTML='<option value="">— load a past month —</option>';
-      json.tabs.forEach(tab=>{
-        const o=document.createElement('option');
-        o.value=tab; o.textContent=tab; sel.appendChild(o);
-      });
-    }
-  } catch(e){}
-}
-
-function applySavedData(d){
-  document.getElementById('s1-per').value=d.s1per||4;
-  document.getElementById('s1-amt').value=d.s1amt||'';
-  document.getElementById('s2-per').value=d.s2per||4;
-  document.getElementById('s2-amt').value=d.s2amt||'';
-  document.getElementById('extra-amt').value=d.extraAmt||'';
-  if(d.expectedRows)d.expectedRows.forEach(r=>{uid=Math.max(uid,r.id);if(!r.actual)r.actual='';state.expectedRows.push(r);});
-  if(d.budgetedRows)d.budgetedRows.forEach(r=>{uid=Math.max(uid,r.id);if(!r.actual)r.actual='';state.budgetedRows.push(r);});
-  if(d.savingsRows)d.savingsRows.forEach(r=>{uid=Math.max(uid,r.id);state.savingsRows.push(r);});
-  if(d.allocRows)d.allocRows.forEach(r=>{uid=Math.max(uid,r.id);state.allocRows.push(r);});
-  renderExpenseRows('expected');renderExpenseRows('budgeted');renderSavingsRows();renderAllocRows();
-  if(d.trackingMode && !trackingMode)toggleMode();
-  else if(!d.trackingMode && trackingMode)toggleMode();
-  else recalc();
-}
-
-document.getElementById('selMonth').addEventListener('change', tryLoadPeriod);
-document.getElementById('selYear').addEventListener('change', tryLoadPeriod);
-
-async function tryLoadPeriod(){
-  const {m,y}=getMonthYear();
-  state={expectedRows:[],budgetedRows:[],savingsRows:[],allocRows:[]};uid=0;
-  if(trackingMode)toggleMode();
-
-  // Try Google Sheets first, fall back to localStorage
-  const sheetsData = await loadFromSheets(m, y);
-  if(sheetsData && sheetsData.expectedRows){
-    applySavedData(sheetsData);
-    return;
-  }
-  const local=localStorage.getItem(storageKey());
-  if(local){
-    try{ applySavedData(JSON.parse(local)); return; }catch(e){}
-  }
-  // Nothing saved — render empty defaults
-  renderExpenseRows('expected');renderExpenseRows('budgeted');renderSavingsRows();renderAllocRows();recalc();
-}
-
-async function loadPastMonth(val){
-  if(!val)return;
-  // val is like "January-2025"
-  const parts=val.split('-');
-  const monthName=parts[0], year=parts[1];
-  const mIdx=MONTHS.indexOf(monthName);
-  if(mIdx===-1)return;
-
-  // Update selectors to match
-  document.getElementById('selMonth').value=mIdx;
-  document.getElementById('selYear').value=year;
-
-  state={expectedRows:[],budgetedRows:[],savingsRows:[],allocRows:[]};uid=0;
-  if(trackingMode)toggleMode();
-
-  setSyncStatus('loading');
-  try {
-    const url=`${SCRIPT_URL}?month=${encodeURIComponent(monthName)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
-    const res=await fetch(url);
-    const json=await res.json();
-    if(json && json.expectedRows){ applySavedData(json); setSyncStatus('saved'); }
-    else { setSyncStatus(''); }
-  } catch(e){ setSyncStatus('error'); }
-}
-
-// ══════════════════════════════════════════
-// YEAR VIEW
-// ══════════════════════════════════════════
-let yearViewActive = false;
-
-function toggleYearView() {
-  yearViewActive = !yearViewActive;
-  const monthlyWrap = document.querySelector('.page-wrap');
-  const yearWrap = document.getElementById('year-view');
-  const ticker = document.querySelector('.ticker-strip');
-  const btn = document.getElementById('btnYear');
-  const badge = document.getElementById('modeBadge');
-
-  if (yearViewActive) {
-    monthlyWrap.style.display = 'none';
-    ticker.style.display = 'none';
-    yearWrap.classList.add('active');
+// ── YEAR VIEW ─────────────────────────────
+function toggleYearView(){
+  yearViewActive=!yearViewActive;
+  const mv=document.getElementById('monthlyView');
+  const yv=document.getElementById('year-view');
+  const ticker=document.getElementById('tickerStrip');
+  const btn=document.querySelector('.btn-year');
+  if(yearViewActive){
+    mv.style.display='none';ticker.style.display='none';
+    yv.classList.add('active');
     document.body.classList.add('year-view');
-    btn.style.background = '#7a5ab8';
-    btn.style.color = '#fff';
-    badge.style.display = 'none';
-    // Populate year selector and load
-    const yrSel = document.getElementById('yrSelect');
-    if (!yrSel.options.length) {
-      const now = new Date().getFullYear();
-      for (let y = now - 3; y <= now + 1; y++) {
-        const o = document.createElement('option');
-        o.value = y; o.textContent = y;
-        if (y === now) o.selected = true;
-        yrSel.appendChild(o);
-      }
-    }
-    document.getElementById('yr-title').textContent = document.getElementById('yrSelect').value;
-    loadYearSummary();
-  } else {
-    monthlyWrap.style.display = '';
-    ticker.style.display = '';
-    yearWrap.classList.remove('active');
+    btn.style.background='#7a5ab8';btn.style.border='1px solid #9a7ad8';
+    document.getElementById('yr-title').textContent=document.getElementById('yrSelect').value;
+  }else{
+    mv.style.display='';ticker.style.display='';
+    yv.classList.remove('active');
     document.body.classList.remove('year-view');
-    btn.style.background = 'rgba(180,130,255,0.15)';
-    btn.style.color = 'var(--cream)';
-    badge.style.display = '';
+    btn.style.background='rgba(180,130,255,0.15)';btn.style.border='1px solid rgba(180,130,255,0.3)';
   }
 }
 
-async function loadYearSummary() {
-  const year = parseInt(document.getElementById('yrSelect').value);
-  document.getElementById('yr-title').textContent = year;
-
-  // Fetch all 12 months in parallel
-  const fetches = MONTHS.map(async (month, i) => {
-    try {
-      const url = `${SCRIPT_URL}?month=${encodeURIComponent(month)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json && json.expectedRows) return { month, i, data: json };
-      return { month, i, data: null };
-    } catch(e) { return { month, i, data: null }; }
+async function loadYearSummary(){
+  const year=parseInt(document.getElementById('yrSelect').value);
+  document.getElementById('yr-title').textContent=year;
+  const fetches=MONTHS.map(async(month,i)=>{
+    try{
+      const url=`${SCRIPT_URL}?month=${encodeURIComponent(month)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
+      const res=await fetch(url);
+      const json=await res.json();
+      return{month,i,data:(json&&json.expectedRows)?json:null};
+    }catch(e){return{month,i,data:null};}
   });
-
-  const results = await Promise.all(fetches);
-  renderYearSummary(results, year);
+  const results=await Promise.all(fetches);
+  renderYearSummary(results,year);
 }
 
-function renderYearSummary(results, year) {
-  const months = results; // [{month, i, data|null}]
+function renderYearSummary(results,year){
+  let totalIncome=0,totalActual=0,totalBudgeted=0,totalSavings=0;
+  const catMap={};
+  const savingsGoalMap={};
+  const shortMo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // ── Aggregate totals ──
-  let totalIncome = 0, totalActual = 0, totalBudgeted = 0, totalSavings = 0;
-
-  // Category map: label → {budgeted, actual} across year
-  const catMap = {};
-
-  // Per-month for bar chart & compare table
-  const monthData = months.map(({ month, i, data }) => {
-    if (!data) return { month, income: 0, budgeted: 0, actual: 0, savings: 0, hasData: false };
-    const income = (parseFloat(data.s1amt)||0)*parseInt(data.s1per||4)
-                 + (parseFloat(data.s2amt)||0)*parseInt(data.s2per||4)
-                 + (parseFloat(data.extraAmt)||0);
-    const budgeted = [...(data.expectedRows||[]), ...(data.budgetedRows||[])]
-                       .reduce((a,r) => a+(parseFloat(r.amount)||0), 0);
-    const actual = [...(data.expectedRows||[]), ...(data.budgetedRows||[])]
-                     .reduce((a,r) => a+(parseFloat(r.actual)||0), 0);
-    const savings = (data.savingsRows||[]).reduce((a,r) => a+(parseFloat(r.amount)||0), 0);
-    totalIncome += income; totalBudgeted += budgeted; totalActual += actual; totalSavings += savings;
-
-    // Category aggregation
-    [...(data.expectedRows||[]), ...(data.budgetedRows||[])].forEach(r => {
-      const lbl = r.label || 'Unnamed';
-      if (!catMap[lbl]) catMap[lbl] = { budgeted: 0, actual: 0 };
-      catMap[lbl].budgeted += parseFloat(r.amount)||0;
-      catMap[lbl].actual   += parseFloat(r.actual)||0;
+  const monthData=results.map(({month,i,data})=>{
+    if(!data)return{month,i,income:0,budgeted:0,actual:0,savings:0,hasData:false};
+    const income=(parseFloat(data.s1amt)||0)*parseInt(data.s1per||4)+(parseFloat(data.s2amt)||0)*parseInt(data.s2per||4)+(parseFloat(data.extraAmt)||0);
+    const rows=[...(data.expectedRows||[]),...(data.budgetedRows||[])];
+    const budgeted=rows.reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+    const actual=rows.reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
+    const savings=(data.savingsRows||[]).reduce((a,r)=>a+(parseFloat(r.amount)||0),0);
+    totalIncome+=income;totalBudgeted+=budgeted;totalActual+=actual;totalSavings+=savings;
+    rows.forEach(r=>{
+      const lbl=r.label||'Unnamed';
+      if(!catMap[lbl])catMap[lbl]={budgeted:0,actual:0};
+      catMap[lbl].budgeted+=parseFloat(r.amount)||0;
+      catMap[lbl].actual+=parseFloat(r.actual)||0;
     });
-
-    return { month, income, budgeted, actual, savings, hasData: true };
+    (data.savingsRows||[]).forEach(r=>{
+      const lbl=r.label||'Savings';
+      savingsGoalMap[lbl]=(savingsGoalMap[lbl]||0)+(parseFloat(r.amount)||0);
+    });
+    return{month,i,income,budgeted,actual,savings,hasData:true};
   });
 
-  // Savings goal aggregation across months
-  const savingsGoalMap = {};
-  months.forEach(({ data }) => {
-    if (!data) return;
-    (data.savingsRows||[]).forEach(r => {
-      const lbl = r.label || 'Savings';
-      if (!savingsGoalMap[lbl]) savingsGoalMap[lbl] = 0;
-      savingsGoalMap[lbl] += parseFloat(r.amount)||0;
-    });
-  });
+  const netSurplus=totalIncome-totalActual-totalSavings;
 
-  const netSurplus = totalIncome - totalActual - totalSavings;
+  // Stats
+  const yrEl=(id,val,cls)=>{const e=document.getElementById(id);if(!e)return;e.textContent=val;if(cls)e.className='year-stat-val '+cls;};
+  yrEl('yr-total-income',totalIncome?fmt(totalIncome):'—','neu');
+  yrEl('yr-total-spent',totalActual?fmt(totalActual):'—',totalActual>totalBudgeted?'neg':'neu');
+  yrEl('yr-total-saved',totalSavings?fmt(totalSavings):'—','pos');
+  yrEl('yr-net-surplus',netSurplus?fmtRaw(netSurplus):'—',netSurplus>=0?'pos':'neg');
 
-  // ── Top stats ──
-  const fmtY = v => v ? fmt(v) : '—';
-  const el = (id, val, cls) => {
-    const e = document.getElementById(id);
-    if (!e) return;
-    e.textContent = val;
-    if (cls) e.className = 'year-stat-val ' + cls;
-  };
-  el('yr-total-income', totalIncome ? fmt(totalIncome) : '—', 'neu');
-  el('yr-total-spent',  totalActual  ? fmt(totalActual)  : '—', totalActual > totalBudgeted ? 'neg' : 'neu');
-  el('yr-total-saved',  totalSavings ? fmt(totalSavings) : '—', 'pos');
-  el('yr-net-surplus',  netSurplus   ? fmtRaw(netSurplus) : '—', netSurplus >= 0 ? 'pos' : 'neg');
-
-  // ── Bar chart ──
-  const barEl = document.getElementById('yr-bar-chart');
-  barEl.innerHTML = '';
-  const maxVal = Math.max(...monthData.map(m => Math.max(m.income, m.budgeted, m.actual)), 1);
-  const shortMo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  monthData.forEach((m, i) => {
-    const grp = document.createElement('div');
-    grp.className = 'bar-group';
-    const incH  = Math.round((m.income   / maxVal) * 160);
-    const budH  = Math.round((m.budgeted / maxVal) * 160);
-    const actH  = Math.round((m.actual   / maxVal) * 160);
-    grp.innerHTML = `
-      <div class="bar-group-bars">
-        <div class="bar" style="height:${incH}px;background:#2d6a4f;" title="Income: ${fmt(m.income)}"></div>
-        <div class="bar" style="height:${budH}px;background:#c0392b;" title="Budgeted: ${fmt(m.budgeted)}"></div>
-        <div class="bar" style="height:${actH}px;background:#b8860b;${!m.hasData?'opacity:0.2':''}" title="Actual: ${m.hasData?fmt(m.actual):'no data'}"></div>
-      </div>
-      <div class="bar-label">${shortMo[i]}</div>`;
+  // Bar chart
+  const barEl=document.getElementById('yr-bar-chart');barEl.innerHTML='';
+  const maxVal=Math.max(...monthData.map(m=>Math.max(m.income,m.budgeted,m.actual)),1);
+  monthData.forEach((m,i)=>{
+    const grp=document.createElement('div');grp.className='bar-group';
+    const ih=Math.round((m.income/maxVal)*160);
+    const bh=Math.round((m.budgeted/maxVal)*160);
+    const ah=Math.round((m.actual/maxVal)*160);
+    grp.innerHTML=`<div class="bar-group-bars">
+      <div class="bar" style="height:${ih}px;background:#2d6a4f;" title="${m.month} Income: ${fmt(m.income)}"></div>
+      <div class="bar" style="height:${bh}px;background:#c0392b;" title="${m.month} Budgeted: ${fmt(m.budgeted)}"></div>
+      <div class="bar" style="height:${ah}px;background:#b8860b;${!m.hasData?'opacity:0.15':''}" title="${m.month} Actual: ${m.hasData?fmt(m.actual):'no data'}"></div>
+    </div><div class="bar-label">${shortMo[i]}</div>`;
     barEl.appendChild(grp);
   });
 
-  // ── Budgeted vs Actual by month table ──
-  const cmpTable = document.getElementById('yr-compare-table');
-  cmpTable.innerHTML = '';
-  const thead = cmpTable.createTHead();
-  const hrow = thead.insertRow();
-  ['Month','Income','Budgeted','Actual Spent','Difference'].forEach((h,i) => {
-    const th = document.createElement('th');
-    th.textContent = h; hrow.appendChild(th);
+  // Compare table
+  const ct=document.getElementById('yr-compare-table');ct.innerHTML='';
+  const th=ct.createTHead(),hr=th.insertRow();
+  ['Month','Income','Budgeted','Actual','Difference'].forEach(h=>{const t=document.createElement('th');t.textContent=h;hr.appendChild(t);});
+  const tb=ct.createTBody();
+  monthData.filter(m=>m.hasData).forEach(m=>{
+    const diff=m.budgeted-m.actual;const tr=tb.insertRow();
+    tr.innerHTML=`<td>${m.month}</td><td>${fmt(m.income)}</td><td>${fmt(m.budgeted)}</td><td>${m.actual>0?fmt(m.actual):'<span class="dim">—</span>'}</td><td class="${m.actual>0?(diff>=0?'pos':'neg'):'dim'}">${m.actual>0?(diff>=0?'+':'')+fmtRaw(diff):'—'}</td>`;
   });
-  const tbody = cmpTable.createTBody();
-  let rIncome=0,rBud=0,rAct=0;
-  monthData.forEach(m => {
-    if (!m.hasData) return;
-    rIncome+=m.income; rBud+=m.budgeted; rAct+=m.actual;
-    const diff = m.budgeted - m.actual;
-    const tr = tbody.insertRow();
-    tr.innerHTML = `
-      <td>${m.month}</td>
-      <td>${fmt(m.income)}</td>
-      <td>${fmt(m.budgeted)}</td>
-      <td>${m.actual > 0 ? fmt(m.actual) : '<span class="dim">—</span>'}</td>
-      <td class="${m.actual>0?(diff>=0?'pos':'neg'):'dim'}">${m.actual>0?(diff>=0?'+':'')+fmtRaw(diff):'—'}</td>`;
-  });
-  const tfoot = cmpTable.createTFoot();
-  const frow = tfoot.insertRow(); frow.className = 'total-row';
-  const totalDiff = rBud - rAct;
-  frow.innerHTML = `<td>Total</td><td>${fmt(rIncome)}</td><td>${fmt(rBud)}</td><td>${fmt(rAct)}</td><td class="${totalDiff>=0?'pos':'neg'}">${totalDiff>=0?'+':''}${fmtRaw(totalDiff)}</td>`;
+  const tf=ct.createTFoot(),fr=tf.insertRow();fr.className='total-row';
+  const td=totalBudgeted-totalActual;
+  fr.innerHTML=`<td>Total</td><td>${fmt(totalIncome)}</td><td>${fmt(totalBudgeted)}</td><td>${fmt(totalActual)}</td><td class="${td>=0?'pos':'neg'}">${td>=0?'+':''}${fmtRaw(td)}</td>`;
 
-  // ── Category totals table ──
-  const catTable = document.getElementById('yr-category-table');
-  catTable.innerHTML = '';
-  const cthead = catTable.createTHead();
-  const crow = cthead.insertRow();
-  ['Category','Budgeted (Year)','Actual (Year)','Difference'].forEach(h => {
-    const th = document.createElement('th'); th.textContent = h; crow.appendChild(th);
+  // Category table
+  const catT=document.getElementById('yr-category-table');catT.innerHTML='';
+  const cth=catT.createTHead(),cr=cth.insertRow();
+  ['Category','Budgeted','Actual','Difference'].forEach(h=>{const t=document.createElement('th');t.textContent=h;cr.appendChild(t);});
+  const ctb=catT.createTBody();
+  Object.entries(catMap).sort((a,b)=>b[1].budgeted-a[1].budgeted).forEach(([lbl,v])=>{
+    const diff=v.budgeted-v.actual;const tr=ctb.insertRow();
+    tr.innerHTML=`<td>${lbl}</td><td>${fmt(v.budgeted)}</td><td>${v.actual>0?fmt(v.actual):'<span class="dim">—</span>'}</td><td class="${v.actual>0?(diff>=0?'pos':'neg'):'dim'}">${v.actual>0?(diff>=0?'+':'')+fmtRaw(diff):'—'}</td>`;
   });
-  const ctbody = catTable.createTBody();
-  let ctBud=0, ctAct=0;
-  Object.entries(catMap).sort((a,b)=>b[1].budgeted-a[1].budgeted).forEach(([lbl,vals]) => {
-    ctBud+=vals.budgeted; ctAct+=vals.actual;
-    const diff = vals.budgeted - vals.actual;
-    const tr = ctbody.insertRow();
-    tr.innerHTML = `
-      <td>${lbl}</td>
-      <td>${fmt(vals.budgeted)}</td>
-      <td>${vals.actual>0?fmt(vals.actual):'<span class="dim">—</span>'}</td>
-      <td class="${vals.actual>0?(diff>=0?'pos':'neg'):'dim'}">${vals.actual>0?(diff>=0?'+':'')+fmtRaw(diff):'—'}</td>`;
-  });
-  const ctfoot = catTable.createTFoot();
-  const cfrow = ctfoot.insertRow(); cfrow.className = 'total-row';
-  const ctDiff = ctBud - ctAct;
-  cfrow.innerHTML = `<td>Total</td><td>${fmt(ctBud)}</td><td>${fmt(ctAct)}</td><td class="${ctDiff>=0?'pos':'neg'}">${ctDiff>=0?'+':''}${fmtRaw(ctDiff)}</td>`;
+  const ctf=catT.createTFoot(),cfr=ctf.insertRow();cfr.className='total-row';
+  const ctd=totalBudgeted-totalActual;
+  cfr.innerHTML=`<td>Total</td><td>${fmt(totalBudgeted)}</td><td>${fmt(totalActual)}</td><td class="${ctd>=0?'pos':'neg'}">${ctd>=0?'+':''}${fmtRaw(ctd)}</td>`;
 
-  // ── Savings goals progress ──
-  const sgGrid = document.getElementById('yr-savings-grid');
-  sgGrid.innerHTML = '';
-  const goalEntries = Object.entries(savingsGoalMap);
-  if (!goalEntries.length) {
-    sgGrid.innerHTML = '<div class="year-loading">No savings goals found in saved months.</div>';
-  } else {
-    let grandSavings = 0;
-    goalEntries.forEach(([lbl, total]) => {
-      grandSavings += total;
-      const card = document.createElement('div');
-      card.className = 'savings-goal-card';
-      card.innerHTML = `
-        <div class="sg-label">${lbl}</div>
-        <div class="sg-total">${fmt(total)} saved this year</div>`;
-      sgGrid.appendChild(card);
+  // Savings goals
+  const sg=document.getElementById('yr-savings-grid');sg.innerHTML='';
+  const goalEntries=Object.entries(savingsGoalMap);
+  if(!goalEntries.length){sg.innerHTML='<div class="year-empty">No savings data found in saved months.</div>';}
+  else{
+    let grand=0;
+    goalEntries.forEach(([lbl,total])=>{grand+=total;
+      const card=document.createElement('div');card.className='savings-goal-card';
+      card.innerHTML=`<div class="sg-label">${esc(lbl)}</div><div class="sg-total">${fmt(total)}</div>`;
+      sg.appendChild(card);
     });
-    document.getElementById('yr-savings-total-hd').textContent = fmt(grandSavings) + ' total allocated';
+    document.getElementById('yr-savings-total-hd').textContent=fmt(grand)+' total';
   }
 }
 
-
+// ── HELPERS ───────────────────────────────
+function fmt(v){return '$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtRaw(v){return(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function setEl(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
