@@ -1160,18 +1160,17 @@ function renderYearSummary(results,year){
     if(!allocEntries.length){allocGrid.innerHTML='<div class="year-empty">No allocation data found in saved months.</div>';}
     else{
       let grandAlloc=0,grandAllocActual=0;
-      allocEntries.sort((a,b)=>b[1].budgeted-a[1].budgeted).forEach(([lbl,v])=>{
+      allocEntries.sort((a,b)=>b[1].actual-a[1].actual||b[1].budgeted-a[1].budgeted).forEach(([lbl,v])=>{
         grandAlloc+=v.budgeted;grandAllocActual+=v.actual;
         const card=document.createElement('div');card.className='savings-goal-card';
-        const diff=v.actual-v.budgeted;
         card.innerHTML=`
           <div class="sg-label">${esc(lbl)}</div>
-          <div class="sg-total">${fmt(v.budgeted)} budgeted</div>
-          ${v.actual>0?`<div style="font-size:11px;color:var(--green);margin-top:4px;">Actual: ${fmt(v.actual)} <span style="color:${diff>=0?'var(--green)':'var(--red)'}">(${diff>=0?'+':''}${fmtRaw(diff)})</span></div>`:''}`;
+          <div class="sg-total">${v.actual>0?fmt(v.actual):'—'}</div>
+          <div style="font-size:11px;color:var(--ink4);margin-top:4px;">Budgeted: ${fmt(v.budgeted)}</div>`;
         allocGrid.appendChild(card);
       });
       const hd=document.getElementById('yr-alloc-total-hd');
-      if(hd)hd.textContent=(grandAllocActual>0?fmt(grandAllocActual)+' actual / ':'')+fmt(grandAlloc)+' budgeted';
+      if(hd)hd.textContent=grandAllocActual>0?fmt(grandAllocActual)+' actually saved':fmt(grandAlloc)+' budgeted';
     }
   }
 }
