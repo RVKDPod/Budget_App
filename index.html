@@ -130,11 +130,53 @@ canvas#pie{max-width:210px;max-height:210px;}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--cream);padding:11px 18px;border-radius:6px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:999;}
 .toast.show{opacity:1;transform:translateY(0);}
 body.tracking-mode .header-band{background:#1a2e1a;}
+body.year-view .header-band{background:#2a1a3a;}
+#year-view{display:none;max-width:1280px;margin:0 auto;padding:24px 24px 80px;}
+#year-view.active{display:block;}
+.year-stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.year-stat{background:#fff;border:1px solid var(--rule);border-radius:8px;padding:16px 20px;box-shadow:var(--shadow);}
+.year-stat-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);font-weight:600;margin-bottom:4px;}
+.year-stat-val{font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;}
+.year-stat-val.pos{color:var(--green);}.year-stat-val.neg{color:var(--red);}.year-stat-val.neu{color:var(--ink);}
+.year-stat-sub{font-size:10px;color:var(--ink4);margin-top:3px;}
+.year-card{background:#fff;border:1px solid var(--rule);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);margin-bottom:20px;}
+.year-card-head{background:var(--cream2);border-bottom:1px solid var(--rule);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+.year-card-title{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.year-loading{padding:40px;text-align:center;color:var(--ink4);font-style:italic;font-size:13px;}
+.bar-chart-wrap{padding:24px 20px 8px;overflow-x:auto;}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:200px;min-width:560px;}
+.bar-group{display:flex;flex-direction:column;align-items:center;flex:1;}
+.bar-group-bars{display:flex;align-items:flex-end;gap:3px;height:170px;width:100%;}
+.bar{border-radius:3px 3px 0 0;flex:1;transition:opacity 0.2s;cursor:default;min-width:10px;}
+.bar:hover{opacity:0.75;}
+.bar-label{font-size:9px;color:var(--ink4);text-align:center;margin-top:5px;letter-spacing:0.3px;}
+.bar-legend{display:flex;gap:20px;padding:4px 20px 16px;font-size:11px;color:var(--ink3);flex-wrap:wrap;}
+.bar-legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle;}
+.year-table-wrap{overflow-x:auto;}
+.year-table{width:100%;border-collapse:collapse;font-size:12px;}
+.year-table th{background:var(--cream);border-bottom:2px solid var(--rule);padding:7px 10px;text-align:right;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink4);font-weight:600;white-space:nowrap;}
+.year-table th:first-child{text-align:left;}
+.year-table td{padding:7px 10px;border-bottom:1px solid #f0ece4;text-align:right;font-family:'Libre Baskerville',serif;color:var(--ink2);white-space:nowrap;}
+.year-table td:first-child{text-align:left;font-family:'Source Sans 3',sans-serif;color:var(--ink3);font-size:12px;}
+.year-table tr:last-child td{border-bottom:none;}
+.year-table tr.total-row td{background:var(--cream2);font-weight:700;border-top:2px solid var(--rule);color:var(--ink);}
+.year-table tr.total-row td:first-child{font-family:'Libre Baskerville',serif;}
+.year-table td.pos{color:var(--green);font-weight:700;}
+.year-table td.neg{color:var(--red);font-weight:700;}
+.year-table td.dim{color:var(--ink4);}
+.savings-progress-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:20px;}
+.savings-goal-card{background:var(--cream);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;}
+.sg-label{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:8px;}
+.sg-bar{height:8px;background:var(--rule);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+.sg-bar-fill{height:100%;background:var(--green);border-radius:4px;}
+.sg-nums{display:flex;justify-content:space-between;font-size:11px;color:var(--ink4);}
+.sg-total{font-family:'Libre Baskerville',serif;font-size:13px;font-weight:700;color:var(--green);margin-top:4px;}
 @media(max-width:860px){
   .main-grid{grid-template-columns:1fr;}.full-width{grid-column:1;}
   .ticker-inner{grid-template-columns:repeat(3,1fr);}
   .chart-wrap{grid-template-columns:1fr;}canvas#pie{margin:0 auto;}
   .compare-grid{grid-template-columns:1fr 1fr;}
+  .year-stat-strip{grid-template-columns:1fr 1fr;}
 }
 </style>
 </head>
@@ -155,6 +197,7 @@ body.tracking-mode .header-band{background:#1a2e1a;}
       </select>
       <span id="syncStatus" style="font-size:11px;font-weight:600;letter-spacing:0.3px;min-width:100px;"></span>
       <button class="btn btn-mode" id="btnMode" onclick="toggleMode()">📊 Enter Actuals</button>
+      <button class="btn btn-mode" id="btnYear" onclick="toggleYearView()" style="background:rgba(180,130,255,0.15);border-color:rgba(180,130,255,0.3);">📅 Year Summary</button>
       <button class="btn btn-save" onclick="saveBudget()">☁️ Save</button>
       <button class="btn btn-print" onclick="window.print()">🖨 Print / PDF</button>
     </div>
@@ -288,6 +331,52 @@ body.tracking-mode .header-band{background:#1a2e1a;}
 </div>
 
 </div></div>
+
+<!-- ══════════════ YEAR SUMMARY VIEW ══════════════ -->
+<div id="year-view">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;color:var(--ink);">Year Summary <span id="yr-title" style="font-style:italic;font-weight:400;color:#7a5ab8;"></span></div>
+      <div style="font-size:11px;color:var(--ink4);margin-top:3px;">Data pulled from your saved months in Google Sheets</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="font-size:11px;color:var(--ink4);">Year:</span>
+      <select id="yrSelect" onchange="loadYearSummary()" style="background:var(--cream2);color:var(--ink);border:1px solid var(--rule);padding:6px 10px;border-radius:4px;font-family:'Source Sans 3',sans-serif;font-size:13px;outline:none;"></select>
+      <button class="btn" onclick="loadYearSummary()" style="background:#7a5ab8;color:#fff;border:none;">↻ Refresh</button>
+    </div>
+  </div>
+  <div class="year-stat-strip">
+    <div class="year-stat"><div class="year-stat-label">Total Income</div><div class="year-stat-val neu" id="yr-total-income">—</div><div class="year-stat-sub">across saved months</div></div>
+    <div class="year-stat"><div class="year-stat-label">Total Actual Spend</div><div class="year-stat-val neu" id="yr-total-spent">—</div><div class="year-stat-sub">real expenses entered</div></div>
+    <div class="year-stat"><div class="year-stat-label">Total Saved</div><div class="year-stat-val pos" id="yr-total-saved">—</div><div class="year-stat-sub">savings goals allocated</div></div>
+    <div class="year-stat"><div class="year-stat-label">Net Surplus</div><div class="year-stat-val neu" id="yr-net-surplus">—</div><div class="year-stat-sub">income minus all spend</div></div>
+  </div>
+  <div class="year-card">
+    <div class="year-card-head"><div class="year-card-title">📊 Income vs. Spend by Month</div></div>
+    <div class="bar-chart-wrap"><div class="bar-chart" id="yr-bar-chart"><div class="year-loading">Load a year to see chart</div></div></div>
+    <div class="bar-legend">
+      <span><span class="bar-legend-dot" style="background:#2d6a4f;"></span>Income</span>
+      <span><span class="bar-legend-dot" style="background:#c0392b;"></span>Budgeted</span>
+      <span><span class="bar-legend-dot" style="background:#b8860b;"></span>Actual Spent</span>
+    </div>
+  </div>
+  <div class="year-card">
+    <div class="year-card-head"><div class="year-card-title">📋 Budgeted vs. Actual by Month</div></div>
+    <div class="year-table-wrap"><table class="year-table" id="yr-compare-table"><tr><td class="year-loading">Load a year to see data</td></tr></table></div>
+  </div>
+  <div class="year-card">
+    <div class="year-card-head"><div class="year-card-title">🗂 Category Totals Across the Year</div></div>
+    <div class="year-table-wrap"><table class="year-table" id="yr-category-table"><tr><td class="year-loading">Load a year to see data</td></tr></table></div>
+  </div>
+  <div class="year-card">
+    <div class="year-card-head">
+      <div class="year-card-title">🎯 Running Savings Total</div>
+      <div style="font-size:12px;color:var(--green);font-weight:600;" id="yr-savings-total-hd"></div>
+    </div>
+    <div class="savings-progress-grid" id="yr-savings-grid"><div class="year-loading">Load a year to see savings</div></div>
+  </div>
+</div>
+
 <div class="toast" id="toast">✓ Budget saved</div>
 
 <script>
@@ -303,6 +392,15 @@ async function init(){
   const now=new Date();ms.value=now.getMonth();
   for(let y=now.getFullYear()-2;y<=now.getFullYear()+5;y++){const o=document.createElement('option');o.value=y;o.textContent=y;ys.appendChild(o);}
   ys.value=now.getFullYear();
+
+  // Pre-populate year summary selector
+  const yrSel = document.getElementById('yrSelect');
+  for (let y = now.getFullYear() - 3; y <= now.getFullYear() + 1; y++) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === now.getFullYear()) o.selected = true;
+    yrSel.appendChild(o);
+  }
 
   // Populate past months dropdown from Sheets
   await refreshMonthList();
@@ -712,7 +810,225 @@ async function loadPastMonth(val){
   } catch(e){ setSyncStatus('error'); }
 }
 
-function fmt(v){return '$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+// ══════════════════════════════════════════
+// YEAR VIEW
+// ══════════════════════════════════════════
+let yearViewActive = false;
+
+function toggleYearView() {
+  yearViewActive = !yearViewActive;
+  const monthlyWrap = document.querySelector('.page-wrap');
+  const yearWrap = document.getElementById('year-view');
+  const ticker = document.querySelector('.ticker-strip');
+  const btn = document.getElementById('btnYear');
+  const badge = document.getElementById('modeBadge');
+
+  if (yearViewActive) {
+    monthlyWrap.style.display = 'none';
+    ticker.style.display = 'none';
+    yearWrap.classList.add('active');
+    document.body.classList.add('year-view');
+    btn.style.background = '#7a5ab8';
+    btn.style.color = '#fff';
+    badge.style.display = 'none';
+    // Populate year selector and load
+    const yrSel = document.getElementById('yrSelect');
+    if (!yrSel.options.length) {
+      const now = new Date().getFullYear();
+      for (let y = now - 3; y <= now + 1; y++) {
+        const o = document.createElement('option');
+        o.value = y; o.textContent = y;
+        if (y === now) o.selected = true;
+        yrSel.appendChild(o);
+      }
+    }
+    document.getElementById('yr-title').textContent = document.getElementById('yrSelect').value;
+    loadYearSummary();
+  } else {
+    monthlyWrap.style.display = '';
+    ticker.style.display = '';
+    yearWrap.classList.remove('active');
+    document.body.classList.remove('year-view');
+    btn.style.background = 'rgba(180,130,255,0.15)';
+    btn.style.color = 'var(--cream)';
+    badge.style.display = '';
+  }
+}
+
+async function loadYearSummary() {
+  const year = parseInt(document.getElementById('yrSelect').value);
+  document.getElementById('yr-title').textContent = year;
+
+  // Fetch all 12 months in parallel
+  const fetches = MONTHS.map(async (month, i) => {
+    try {
+      const url = `${SCRIPT_URL}?month=${encodeURIComponent(month)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json && json.expectedRows) return { month, i, data: json };
+      return { month, i, data: null };
+    } catch(e) { return { month, i, data: null }; }
+  });
+
+  const results = await Promise.all(fetches);
+  renderYearSummary(results, year);
+}
+
+function renderYearSummary(results, year) {
+  const months = results; // [{month, i, data|null}]
+
+  // ── Aggregate totals ──
+  let totalIncome = 0, totalActual = 0, totalBudgeted = 0, totalSavings = 0;
+
+  // Category map: label → {budgeted, actual} across year
+  const catMap = {};
+
+  // Per-month for bar chart & compare table
+  const monthData = months.map(({ month, i, data }) => {
+    if (!data) return { month, income: 0, budgeted: 0, actual: 0, savings: 0, hasData: false };
+    const income = (parseFloat(data.s1amt)||0)*parseInt(data.s1per||4)
+                 + (parseFloat(data.s2amt)||0)*parseInt(data.s2per||4)
+                 + (parseFloat(data.extraAmt)||0);
+    const budgeted = [...(data.expectedRows||[]), ...(data.budgetedRows||[])]
+                       .reduce((a,r) => a+(parseFloat(r.amount)||0), 0);
+    const actual = [...(data.expectedRows||[]), ...(data.budgetedRows||[])]
+                     .reduce((a,r) => a+(parseFloat(r.actual)||0), 0);
+    const savings = (data.savingsRows||[]).reduce((a,r) => a+(parseFloat(r.amount)||0), 0);
+    totalIncome += income; totalBudgeted += budgeted; totalActual += actual; totalSavings += savings;
+
+    // Category aggregation
+    [...(data.expectedRows||[]), ...(data.budgetedRows||[])].forEach(r => {
+      const lbl = r.label || 'Unnamed';
+      if (!catMap[lbl]) catMap[lbl] = { budgeted: 0, actual: 0 };
+      catMap[lbl].budgeted += parseFloat(r.amount)||0;
+      catMap[lbl].actual   += parseFloat(r.actual)||0;
+    });
+
+    return { month, income, budgeted, actual, savings, hasData: true };
+  });
+
+  // Savings goal aggregation across months
+  const savingsGoalMap = {};
+  months.forEach(({ data }) => {
+    if (!data) return;
+    (data.savingsRows||[]).forEach(r => {
+      const lbl = r.label || 'Savings';
+      if (!savingsGoalMap[lbl]) savingsGoalMap[lbl] = 0;
+      savingsGoalMap[lbl] += parseFloat(r.amount)||0;
+    });
+  });
+
+  const netSurplus = totalIncome - totalActual - totalSavings;
+
+  // ── Top stats ──
+  const fmtY = v => v ? fmt(v) : '—';
+  const el = (id, val, cls) => {
+    const e = document.getElementById(id);
+    if (!e) return;
+    e.textContent = val;
+    if (cls) e.className = 'year-stat-val ' + cls;
+  };
+  el('yr-total-income', totalIncome ? fmt(totalIncome) : '—', 'neu');
+  el('yr-total-spent',  totalActual  ? fmt(totalActual)  : '—', totalActual > totalBudgeted ? 'neg' : 'neu');
+  el('yr-total-saved',  totalSavings ? fmt(totalSavings) : '—', 'pos');
+  el('yr-net-surplus',  netSurplus   ? fmtRaw(netSurplus) : '—', netSurplus >= 0 ? 'pos' : 'neg');
+
+  // ── Bar chart ──
+  const barEl = document.getElementById('yr-bar-chart');
+  barEl.innerHTML = '';
+  const maxVal = Math.max(...monthData.map(m => Math.max(m.income, m.budgeted, m.actual)), 1);
+  const shortMo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  monthData.forEach((m, i) => {
+    const grp = document.createElement('div');
+    grp.className = 'bar-group';
+    const incH  = Math.round((m.income   / maxVal) * 160);
+    const budH  = Math.round((m.budgeted / maxVal) * 160);
+    const actH  = Math.round((m.actual   / maxVal) * 160);
+    grp.innerHTML = `
+      <div class="bar-group-bars">
+        <div class="bar" style="height:${incH}px;background:#2d6a4f;" title="Income: ${fmt(m.income)}"></div>
+        <div class="bar" style="height:${budH}px;background:#c0392b;" title="Budgeted: ${fmt(m.budgeted)}"></div>
+        <div class="bar" style="height:${actH}px;background:#b8860b;${!m.hasData?'opacity:0.2':''}" title="Actual: ${m.hasData?fmt(m.actual):'no data'}"></div>
+      </div>
+      <div class="bar-label">${shortMo[i]}</div>`;
+    barEl.appendChild(grp);
+  });
+
+  // ── Budgeted vs Actual by month table ──
+  const cmpTable = document.getElementById('yr-compare-table');
+  cmpTable.innerHTML = '';
+  const thead = cmpTable.createTHead();
+  const hrow = thead.insertRow();
+  ['Month','Income','Budgeted','Actual Spent','Difference'].forEach((h,i) => {
+    const th = document.createElement('th');
+    th.textContent = h; hrow.appendChild(th);
+  });
+  const tbody = cmpTable.createTBody();
+  let rIncome=0,rBud=0,rAct=0;
+  monthData.forEach(m => {
+    if (!m.hasData) return;
+    rIncome+=m.income; rBud+=m.budgeted; rAct+=m.actual;
+    const diff = m.budgeted - m.actual;
+    const tr = tbody.insertRow();
+    tr.innerHTML = `
+      <td>${m.month}</td>
+      <td>${fmt(m.income)}</td>
+      <td>${fmt(m.budgeted)}</td>
+      <td>${m.actual > 0 ? fmt(m.actual) : '<span class="dim">—</span>'}</td>
+      <td class="${m.actual>0?(diff>=0?'pos':'neg'):'dim'}">${m.actual>0?(diff>=0?'+':'')+fmtRaw(diff):'—'}</td>`;
+  });
+  const tfoot = cmpTable.createTFoot();
+  const frow = tfoot.insertRow(); frow.className = 'total-row';
+  const totalDiff = rBud - rAct;
+  frow.innerHTML = `<td>Total</td><td>${fmt(rIncome)}</td><td>${fmt(rBud)}</td><td>${fmt(rAct)}</td><td class="${totalDiff>=0?'pos':'neg'}">${totalDiff>=0?'+':''}${fmtRaw(totalDiff)}</td>`;
+
+  // ── Category totals table ──
+  const catTable = document.getElementById('yr-category-table');
+  catTable.innerHTML = '';
+  const cthead = catTable.createTHead();
+  const crow = cthead.insertRow();
+  ['Category','Budgeted (Year)','Actual (Year)','Difference'].forEach(h => {
+    const th = document.createElement('th'); th.textContent = h; crow.appendChild(th);
+  });
+  const ctbody = catTable.createTBody();
+  let ctBud=0, ctAct=0;
+  Object.entries(catMap).sort((a,b)=>b[1].budgeted-a[1].budgeted).forEach(([lbl,vals]) => {
+    ctBud+=vals.budgeted; ctAct+=vals.actual;
+    const diff = vals.budgeted - vals.actual;
+    const tr = ctbody.insertRow();
+    tr.innerHTML = `
+      <td>${lbl}</td>
+      <td>${fmt(vals.budgeted)}</td>
+      <td>${vals.actual>0?fmt(vals.actual):'<span class="dim">—</span>'}</td>
+      <td class="${vals.actual>0?(diff>=0?'pos':'neg'):'dim'}">${vals.actual>0?(diff>=0?'+':'')+fmtRaw(diff):'—'}</td>`;
+  });
+  const ctfoot = catTable.createTFoot();
+  const cfrow = ctfoot.insertRow(); cfrow.className = 'total-row';
+  const ctDiff = ctBud - ctAct;
+  cfrow.innerHTML = `<td>Total</td><td>${fmt(ctBud)}</td><td>${fmt(ctAct)}</td><td class="${ctDiff>=0?'pos':'neg'}">${ctDiff>=0?'+':''}${fmtRaw(ctDiff)}</td>`;
+
+  // ── Savings goals progress ──
+  const sgGrid = document.getElementById('yr-savings-grid');
+  sgGrid.innerHTML = '';
+  const goalEntries = Object.entries(savingsGoalMap);
+  if (!goalEntries.length) {
+    sgGrid.innerHTML = '<div class="year-loading">No savings goals found in saved months.</div>';
+  } else {
+    let grandSavings = 0;
+    goalEntries.forEach(([lbl, total]) => {
+      grandSavings += total;
+      const card = document.createElement('div');
+      card.className = 'savings-goal-card';
+      card.innerHTML = `
+        <div class="sg-label">${lbl}</div>
+        <div class="sg-total">${fmt(total)} saved this year</div>`;
+      sgGrid.appendChild(card);
+    });
+    document.getElementById('yr-savings-total-hd').textContent = fmt(grandSavings) + ' total allocated';
+  }
+}
+
+
 function fmtRaw(v){return(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function setEl(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
