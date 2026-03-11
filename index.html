@@ -543,6 +543,7 @@ function renderChart(income){
 // GOOGLE SHEETS SYNC
 // ══════════════════════════════════════════
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEHIhKLJtd7gHe9TRMLOzoCE-bgAXKM7hV7W9PveyGEk4J_UywPPnyzk0bimkzkfQ/exec';
+const SECRET = 'j$Budget$app$2026!mDbR94';
 
 function getMonthYear(){
   const m=document.getElementById('selMonth')?.value??0;
@@ -598,7 +599,7 @@ async function saveBudget(){
   try {
     const res = await fetch(SCRIPT_URL, {
       method:'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({...data, secret: SECRET}),
     });
     const json = await res.json();
     if(json.status==='ok'){
@@ -618,7 +619,7 @@ async function loadFromSheets(m, y){
   const month=MONTHS[parseInt(m)], year=parseInt(y);
   setSyncStatus('loading');
   try {
-    const url=`${SCRIPT_URL}?month=${encodeURIComponent(month)}&year=${year}`;
+    const url=`${SCRIPT_URL}?month=${encodeURIComponent(month)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
     const res = await fetch(url);
     const json = await res.json();
     if(json.status==='empty') { setSyncStatus(''); return null; }
@@ -633,7 +634,7 @@ async function loadFromSheets(m, y){
 async function refreshMonthList(){
   // Load list of saved months from sheets and populate the past months dropdown
   try {
-    const url=`${SCRIPT_URL}?list=1`;
+    const url=`${SCRIPT_URL}?list=1&secret=${encodeURIComponent(SECRET)}`;
     const res = await fetch(url);
     const json = await res.json();
     if(json.tabs){
@@ -703,7 +704,7 @@ async function loadPastMonth(val){
 
   setSyncStatus('loading');
   try {
-    const url=`${SCRIPT_URL}?month=${encodeURIComponent(monthName)}&year=${year}`;
+    const url=`${SCRIPT_URL}?month=${encodeURIComponent(monthName)}&year=${year}&secret=${encodeURIComponent(SECRET)}`;
     const res=await fetch(url);
     const json=await res.json();
     if(json && json.expectedRows){ applySavedData(json); setSyncStatus('saved'); }
