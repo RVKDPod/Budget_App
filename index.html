@@ -797,8 +797,26 @@ function recalc(){
 
   if(trackingMode){
     const totalActual=[...state.expectedRows,...state.budgetedRows].reduce((a,r)=>a+(parseFloat(r.actual)||0),0);
+    // In tracking mode: use actual spend instead of budgeted for the "used" and "remaining" calculations
+    const actualCommitted=totalActual+savTotal;
+    const actualPlaced=actualCommitted+allocTotal;
+    const actualUnallocated=totalIncome-actualPlaced;
+
     setTicker('tv-actual',totalActual,'neu');
     setMeter('tb-actual',totalIncome>0?(totalActual/totalIncome)*100:0,'#c07a20');
+
+    // Override the summary card to show actuals-based numbers
+    document.getElementById('ls-used').textContent=fmt(actualCommitted);
+    const ua2=document.getElementById('ls-unalloc');
+    ua2.textContent=fmt(actualUnallocated);
+    ua2.className='ls-val '+(actualUnallocated<0?'neg':actualUnallocated>0?'pos':'neu');
+
+    // Override ticker remaining and alloc with actuals-based numbers
+    setTicker('tv-alloc',actualPlaced,'neu');
+    setTicker('tv-remain',actualUnallocated,actualUnallocated<0?'neg':actualUnallocated>0?'pos':'neu');
+    setMeter('tb-alloc',totalIncome>0?(actualPlaced/totalIncome)*100:0,'var(--blue)');
+    setMeter('tb-remain',totalIncome>0?(Math.abs(actualUnallocated)/totalIncome)*100:0,actualUnallocated<0?'var(--red)':'var(--green)');
+
     document.getElementById('cmp-budgeted').textContent=fmt(totalBudgeted);
     document.getElementById('cmp-actual').textContent=fmt(totalActual);
     const actualDiff=totalBudgeted-totalActual;
