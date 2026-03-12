@@ -68,6 +68,17 @@ select.hdr-select option{background:#1c1a16;}
 .row{display:grid;align-items:center;padding:8px 18px;border-bottom:1px solid #f0ece4;gap:8px;transition:background 0.1s;}
 .row:last-child{border-bottom:none;}
 .row:hover{background:#fafaf7;}
+.row-wrap{border-bottom:1px solid #f0ece4;}
+.row-wrap:last-child{border-bottom:none;}
+.row-wrap:hover{background:#fafaf7;}
+.row-wrap .row{border-bottom:none;padding-bottom:2px;}
+.row-wrap .row:hover{background:transparent;}
+.drag-handle{cursor:grab;color:#d4cbbf;font-size:13px;padding:0 1px;user-select:none;flex-shrink:0;line-height:1;transition:color 0.15s;}
+.drag-handle:hover{color:var(--ink4);}
+.drag-handle:active{cursor:grabbing;}
+.dragging{opacity:0.38;background:var(--cream2)!important;}
+.drag-over-top{box-shadow:inset 0 2px 0 var(--gold);}
+.drag-over-bottom{box-shadow:inset 0 -2px 0 var(--gold);}
 .row-name-wrap{display:flex;align-items:center;gap:6px;min-width:0;}
 .nm-tag{font-size:9px;letter-spacing:0.8px;text-transform:uppercase;background:var(--gold-bg);color:var(--gold);border:1px solid #e8d580;padding:1px 5px;border-radius:10px;font-weight:600;white-space:nowrap;}
 .diff-val{font-family:'Libre Baskerville',serif;font-size:12px;font-weight:700;text-align:right;white-space:nowrap;}
@@ -90,6 +101,16 @@ select.pay-sel:focus{border-color:var(--gold);}
 .add-btn:hover{color:var(--gold);}
 .del-btn{background:none;border:none;color:var(--rule);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;border-radius:3px;transition:color 0.15s;flex-shrink:0;}
 .del-btn:hover{color:var(--red);}
+.drag-handle{color:var(--rule);cursor:grab;font-size:13px;padding:0 3px;flex-shrink:0;user-select:none;transition:color 0.15s;}
+.drag-handle:hover{color:var(--ink4);}
+.drag-handle:active{cursor:grabbing;}
+.row-wrap.dragging{opacity:0.4;}
+.row-wrap.drag-over{border-top:2px solid var(--gold);}
+.row.dragging{opacity:0.4;}
+.row.drag-over-top{border-top:2px solid var(--gold);}
+.undo-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:#2a2420;color:var(--cream);padding:10px 18px;border-radius:6px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;transition:all 0.25s;pointer-events:none;z-index:1000;display:flex;align-items:center;gap:12px;white-space:nowrap;}
+.undo-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all;}
+.undo-btn{background:var(--gold);color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Source Sans 3',sans-serif;}
 .nm-panel .card-head{background:var(--gold-bg);border-bottom-color:#e8d580;}
 .nm-panel .card-title{color:var(--gold);}
 .nm-row{display:flex;align-items:center;justify-content:space-between;padding:7px 18px;border-bottom:1px solid #f5edcc;font-size:13px;color:var(--ink3);}
@@ -137,8 +158,11 @@ canvas#pie{max-width:210px;max-height:210px;}
 .legend-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
 .legend-pct{margin-left:auto;font-family:'Libre Baskerville',serif;font-weight:700;color:var(--ink);font-size:12px;}
 .legend-amt{color:var(--ink4);font-size:11px;margin-left:3px;}
-.toast{position:fixed;bottom:24px;right:24px;color:var(--cream);padding:11px 18px;border-radius:6px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:999;background:var(--ink);}
-.toast.show{opacity:1;transform:translateY(0);}
+.toast{position:fixed;bottom:24px;right:24px;color:var(--cream);padding:10px 16px;border-radius:6px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:999;background:var(--ink);display:flex;align-items:center;gap:10px;}
+.toast.show{opacity:1;transform:translateY(0);pointer-events:all;}
+.toast-msg{flex:1;}
+.toast-undo{background:none;border:1px solid rgba(255,255,255,0.32);color:var(--cream);font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;cursor:pointer;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;font-family:'Source Sans 3',sans-serif;}
+.toast-undo:hover{background:rgba(255,255,255,0.15);}
 body.tracking-mode .header-band{background:#1a2e1a;}
 body.year-view .header-band{background:#2a1a3a;}
 
@@ -397,7 +421,7 @@ body.year-view .header-band{background:#2a1a3a;}
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"><span class="toast-msg" id="toast-msg"></span><button class="toast-undo" id="toast-undo" style="display:none" onclick="undoDelete()">Undo</button></div>
 
 <script>
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -542,13 +566,89 @@ function setSyncStatus(status){
   el.textContent=s.text||''; el.style.color=s.color||'';
 }
 
-function showToast(msg,isError=false){
+// ── UNDO STATE ────────────────────────────
+let undoStack=null; // {section, index, row} or {type:'savings'|'alloc', index, row}
+let toastTimer=null;
+
+function showToast(msg,isError=false,withUndo=false){
   const t=document.getElementById('toast');
-  t.textContent=msg;
+  document.getElementById('toast-msg').textContent=msg;
   t.style.background=isError?'#8b2020':'#1c1a16';
+  const undoBtn=document.getElementById('toast-undo');
+  undoBtn.style.display=withUndo?'':'none';
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.classList.remove('show');if(!withUndo)undoStack=null;},withUndo?5000:2800);
 }
+
+function undoDelete(){
+  if(!undoStack)return;
+  const {type,section,index,row}=undoStack;
+  undoStack=null;
+  document.getElementById('toast').classList.remove('show');
+  if(type==='expense'){
+    const arr=section==='expected'?state.expectedRows:state.budgetedRows;
+    arr.splice(index,0,row);
+    renderExpenseRows(section);
+  }else if(type==='savings'){
+    state.savingsRows.splice(index,0,row);
+    renderSavingsRows();
+  }else if(type==='alloc'){
+    state.allocRows.splice(index,0,row);
+    renderAllocRows();
+  }
+  showToast('↩ Row restored');
+}
+
+// ── DRAG AND DROP ─────────────────────────
+let dragSrc=null,dragSrcSection=null,dragSrcType=null;
+
+function makeDraggable(el,type,section){
+  el.setAttribute('draggable','true');
+  el.addEventListener('dragstart',e=>{
+    dragSrc=el;dragSrcSection=section;dragSrcType=type;
+    e.dataTransfer.effectAllowed='move';
+    setTimeout(()=>el.classList.add('dragging'),0);
+  });
+  el.addEventListener('dragend',()=>{
+    el.classList.remove('dragging');
+    document.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(x=>x.classList.remove('drag-over-top','drag-over-bottom'));
+    dragSrc=null;
+  });
+  el.addEventListener('dragover',e=>{
+    if(!dragSrc||dragSrc===el||dragSrcSection!==section||dragSrcType!==type)return;
+    e.preventDefault();e.dataTransfer.dropEffect='move';
+    const rect=el.getBoundingClientRect(),mid=rect.top+rect.height/2;
+    document.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(x=>x.classList.remove('drag-over-top','drag-over-bottom'));
+    el.classList.add(e.clientY<mid?'drag-over-top':'drag-over-bottom');
+  });
+  el.addEventListener('dragleave',()=>{
+    el.classList.remove('drag-over-top','drag-over-bottom');
+  });
+  el.addEventListener('drop',e=>{
+    if(!dragSrc||dragSrc===el||dragSrcSection!==section||dragSrcType!==type)return;
+    e.preventDefault();
+    el.classList.remove('drag-over-top','drag-over-bottom');
+    const rect=el.getBoundingClientRect(),mid=rect.top+rect.height/2;
+    const insertBefore=e.clientY<mid;
+    // Reorder the state array
+    let arr;
+    if(type==='expense')arr=section==='expected'?state.expectedRows:state.budgetedRows;
+    else if(type==='savings')arr=state.savingsRows;
+    else if(type==='alloc')arr=state.allocRows;
+    const ids=[...el.parentElement.children].filter(c=>c.dataset.rowid).map(c=>parseInt(c.dataset.rowid));
+    const fromId=parseInt(dragSrc.dataset.rowid),toId=parseInt(el.dataset.rowid);
+    const fromIdx=arr.findIndex(r=>r.id===fromId),toIdx=arr.findIndex(r=>r.id===toId);
+    if(fromIdx===-1||toIdx===-1)return;
+    const [moved]=arr.splice(fromIdx,1);
+    const newToIdx=arr.findIndex(r=>r.id===toId);
+    arr.splice(insertBefore?newToIdx:newToIdx+1,0,moved);
+    if(type==='expense')renderExpenseRows(section);
+    else if(type==='savings')renderSavingsRows();
+    else if(type==='alloc')renderAllocRows();
+  });
+}
+
 
 async function saveBudget(){
   const m=parseInt(document.getElementById('selMonth').value);
@@ -627,22 +727,23 @@ function renderExpenseRows(section){
   const colHead=document.getElementById('ch-'+section);
   container.innerHTML='';
   if(trackingMode){
-    colHead.style.gridTemplateColumns='18px 1fr 90px 90px 68px 20px 22px';
-    colHead.innerHTML='<span>★</span><span>Item</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span><span></span>';
+    colHead.style.gridTemplateColumns='14px 18px 1fr 90px 90px 68px 20px 22px';
+    colHead.innerHTML='<span></span><span>★</span><span>Item</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span><span></span>';
   }else{
-    colHead.style.gridTemplateColumns='18px 1fr 105px 20px 22px';
-    colHead.innerHTML='<span title="Non-monthly">★</span><span>Item</span><span style="text-align:right">Budgeted</span><span></span><span></span>';
+    colHead.style.gridTemplateColumns='14px 18px 1fr 105px 20px 22px';
+    colHead.innerHTML='<span></span><span title="Non-monthly">★</span><span>Item</span><span style="text-align:right">Budgeted</span><span></span><span></span>';
   }
   arr.forEach(r=>{
     const bud=parseFloat(r.amount)||0,act=parseFloat(r.actual)||0,diff=bud-act;
-    const div=document.createElement('div');div.className='row-wrap';div.id='er-'+r.id;
+    const div=document.createElement('div');div.className='row-wrap';div.id='er-'+r.id;div.dataset.rowid=r.id;
     const noteOpen=r.note?'open':'';
     const hasNote=r.note?'has-note':'';
     if(trackingMode){
       const dc=act===0?'diff-zero':diff>=0?'diff-pos':'diff-neg';
       const ds=act===0?'—':(diff>=0?'+':'')+fmtRaw(diff);
       div.innerHTML=`
-        <div class="row" style="grid-template-columns:18px 1fr 90px 90px 68px 20px 22px">
+        <div class="row" style="grid-template-columns:14px 18px 1fr 90px 90px 68px 20px 22px" draggable="true" data-id="${r.id}" data-section="${section}">
+          <span class="drag-handle no-print">⠿</span>
           <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
           <div class="row-name-wrap">
             <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Expense name…" oninput="updateField('${section}',${r.id},'label',this.value)">
@@ -659,7 +760,8 @@ function renderExpenseRows(section){
         </div>`;
     }else{
       div.innerHTML=`
-        <div class="row" style="grid-template-columns:18px 1fr 105px 20px 22px">
+        <div class="row" style="grid-template-columns:14px 18px 1fr 105px 20px 22px" draggable="true" data-id="${r.id}" data-section="${section}">
+          <span class="drag-handle no-print">⠿</span>
           <input type="checkbox" ${r.nm?'checked':''} onchange="toggleNM('${section}',${r.id},this.checked)">
           <div class="row-name-wrap">
             <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Expense name…" oninput="updateField('${section}',${r.id},'label',this.value)">
@@ -674,6 +776,7 @@ function renderExpenseRows(section){
         </div>`;
     }
     container.appendChild(div);
+    makeDraggable(div,'expense',section);
   });
   recalc();
 }
@@ -682,22 +785,23 @@ function renderSavingsRows(){
   const container=document.getElementById('savings-rows');container.innerHTML='';
   const colHead=document.getElementById('ch-savings');
   if(trackingMode){
-    colHead.style.gridTemplateColumns='1fr 105px 90px 68px 80px 22px';
-    colHead.innerHTML='<span>Goal / Purpose</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span style="text-align:center">Status</span><span></span>';
+    colHead.style.gridTemplateColumns='14px 1fr 105px 90px 68px 80px 22px';
+    colHead.innerHTML='<span></span><span>Goal / Purpose</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span style="text-align:center">Status</span><span></span>';
   }else{
-    colHead.style.gridTemplateColumns='1fr 105px 80px 22px';
-    colHead.innerHTML='<span>Goal / Purpose</span><span style="text-align:right">Monthly Alloc.</span><span style="text-align:center">Status</span><span></span>';
+    colHead.style.gridTemplateColumns='14px 1fr 105px 80px 22px';
+    colHead.innerHTML='<span></span><span>Goal / Purpose</span><span style="text-align:right">Monthly Alloc.</span><span style="text-align:center">Status</span><span></span>';
   }
   state.savingsRows.forEach(r=>{
-    const div=document.createElement('div');div.className='row'+(r.done?' savings-row-done':'');div.id='sr-'+r.id;
+    const div=document.createElement('div');div.className='row'+(r.done?' savings-row-done':'');div.id='sr-'+r.id;div.dataset.rowid=r.id;
     const doneBadge=r.done?'<span class="savings-done-badge">✓ Done</span>':'';
     const completeBtn=`<button class="complete-btn no-print ${r.done?'done':''}" onclick="toggleSavingsDone(${r.id})">${r.done?'↩ Reopen':'✓ Complete'}</button>`;
     if(trackingMode){
-      div.style.gridTemplateColumns='1fr 105px 90px 68px 80px 22px';
+      div.style.gridTemplateColumns='14px 1fr 105px 90px 68px 80px 22px';
       const bud=parseFloat(r.amount)||0,act=parseFloat(r.actual)||0,diff=bud-act;
       const dc=act===0?'diff-zero':diff>=0?'diff-pos':'diff-neg';
       const ds=act===0?'—':(diff>=0?'+':'')+fmtRaw(diff);
       div.innerHTML=`
+        <span class="drag-handle no-print">⠿</span>
         <div class="row-name-wrap">
           <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Goal name…" oninput="updateSavings(${r.id},'label',this.value)"${r.done?' disabled':''}>
           ${doneBadge}
@@ -708,8 +812,9 @@ function renderSavingsRows(){
         ${completeBtn}
         <button class="del-btn no-print" onclick="deleteSavings(${r.id})">×</button>`;
     }else{
-      div.style.gridTemplateColumns='1fr 105px 80px 22px';
+      div.style.gridTemplateColumns='14px 1fr 105px 80px 22px';
       div.innerHTML=`
+        <span class="drag-handle no-print">⠿</span>
         <div class="row-name-wrap">
           <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="Goal name…" oninput="updateSavings(${r.id},'label',this.value)"${r.done?' disabled':''}>
           ${doneBadge}
@@ -719,6 +824,7 @@ function renderSavingsRows(){
         <button class="del-btn no-print" onclick="deleteSavings(${r.id})">×</button>`;
     }
     container.appendChild(div);
+    makeDraggable(div,'savings','savings');
   });
   recalc();
 }
@@ -727,33 +833,37 @@ function renderAllocRows(){
   const container=document.getElementById('alloc-rows');container.innerHTML='';
   const colHead=document.getElementById('ch-alloc');
   if(trackingMode){
-    colHead.style.gridTemplateColumns='1fr 105px 90px 68px 22px';
-    colHead.innerHTML='<span>Destination</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span>';
+    colHead.style.gridTemplateColumns='14px 1fr 105px 90px 68px 22px';
+    colHead.innerHTML='<span></span><span>Destination</span><span style="text-align:right">Budgeted</span><span style="text-align:right;color:var(--green)">Actual</span><span style="text-align:right">Diff</span><span></span>';
   }else{
-    colHead.style.gridTemplateColumns='1fr 105px 22px';
-    colHead.innerHTML='<span>Destination</span><span style="text-align:right">Amount</span><span></span>';
+    colHead.style.gridTemplateColumns='14px 1fr 105px 22px';
+    colHead.innerHTML='<span></span><span>Destination</span><span style="text-align:right">Amount</span><span></span>';
   }
   state.allocRows.forEach(r=>{
-    const div=document.createElement('div');div.className='row';div.id='ar-'+r.id;
+    const div=document.createElement('div');div.className='row';div.id='ar-'+r.id;div.dataset.rowid=r.id;
+    const handle='<span class="drag-handle no-print" title="Drag to reorder">⠿</span>';
     if(trackingMode){
-      div.style.gridTemplateColumns='1fr 105px 90px 68px 22px';
+      div.style.gridTemplateColumns='14px 1fr 105px 90px 68px 22px';
       const bud=parseFloat(r.amount)||0,act=parseFloat(r.actual)||0,diff=bud-act;
       const dc=act===0?'diff-zero':diff>=0?'diff-pos':'diff-neg';
       const ds=act===0?'—':(diff>=0?'+':'')+fmtRaw(diff);
       div.innerHTML=`
+        ${handle}
         <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="e.g. General Savings…" oninput="updateAlloc(${r.id},'label',this.value)">
         <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateAlloc(${r.id},'amount',this.value)">
         <input type="number" value="${r.actual||''}" placeholder="0.00" min="0" step="0.01" class="actual-input${act>bud&&bud>0?' over':''}" oninput="updateAlloc(${r.id},'actual',this.value)">
         <div class="diff-val ${dc}">${ds}</div>
         <button class="del-btn no-print" onclick="deleteAlloc(${r.id})">×</button>`;
     }else{
-      div.style.gridTemplateColumns='1fr 105px 22px';
+      div.style.gridTemplateColumns='14px 1fr 105px 22px';
       div.innerHTML=`
+        ${handle}
         <input type="text" class="row-text-input" value="${esc(r.label)}" placeholder="e.g. General Savings…" oninput="updateAlloc(${r.id},'label',this.value)">
         <input type="number" value="${r.amount}" placeholder="0.00" min="0" step="0.01" oninput="updateAlloc(${r.id},'amount',this.value)">
         <button class="del-btn no-print" onclick="deleteAlloc(${r.id})">×</button>`;
     }
     container.appendChild(div);
+    makeDraggable(div,'alloc','alloc');
   });
   recalc();
 }
@@ -784,6 +894,15 @@ function addExpenseRow(section,label='',amount='',actual='',nm=false,note=''){
   arr.push({id:newId(),label,amount,actual,nm,note});
   renderExpenseRows(section);
 }
+function deleteExpenseRow(section,id){
+  const arr=section==='expected'?state.expectedRows:state.budgetedRows;
+  const index=arr.findIndex(r=>r.id===id);if(index===-1)return;
+  undoStack={type:'expense',section,index,row:{...arr[index]}};
+  if(section==='expected')state.expectedRows=state.expectedRows.filter(r=>r.id!==id);
+  else state.budgetedRows=state.budgetedRows.filter(r=>r.id!==id);
+  renderExpenseRows(section);
+  showToast(`"${undoStack.row.label||'Item'}" deleted`,false,true);
+}
 function toggleNote(section,id){
   const arr=section==='expected'?state.expectedRows:state.budgetedRows;
   const r=arr.find(r=>r.id===id);if(!r)return;
@@ -792,11 +911,6 @@ function toggleNote(section,id){
   if(!noteRow)return;
   const isOpen=noteRow.classList.toggle('open');
   if(isOpen){noteRow.querySelector('textarea')?.focus();}
-}
-function deleteExpenseRow(section,id){
-  if(section==='expected')state.expectedRows=state.expectedRows.filter(r=>r.id!==id);
-  else state.budgetedRows=state.budgetedRows.filter(r=>r.id!==id);
-  renderExpenseRows(section);
 }
 function updateField(section,id,field,val){
   const arr=section==='expected'?state.expectedRows:state.budgetedRows;
@@ -822,7 +936,13 @@ function toggleNM(section,id,checked){
   const r=arr.find(r=>r.id===id);if(r){r.nm=checked;renderExpenseRows(section);}
 }
 function addSavingsRow(label='',amount='',actual='',done=false){state.savingsRows.push({id:newId(),label,amount,actual,done});renderSavingsRows();}
-function deleteSavings(id){state.savingsRows=state.savingsRows.filter(r=>r.id!==id);renderSavingsRows();}
+function deleteSavings(id){
+  const index=state.savingsRows.findIndex(r=>r.id===id);if(index===-1)return;
+  undoStack={type:'savings',index,row:{...state.savingsRows[index]}};
+  state.savingsRows=state.savingsRows.filter(r=>r.id!==id);
+  renderSavingsRows();
+  showToast(`"${undoStack.row.label||'Item'}" deleted`,false,true);
+}
 function updateSavings(id,field,val){
   const r=state.savingsRows.find(r=>r.id===id);if(!r)return;r[field]=val;
   if(field==='actual'){
@@ -843,7 +963,13 @@ function toggleSavingsDone(id){
   showToast(r.done?'✓ Goal marked complete':'Goal reopened');
 }
 function addAllocRow(label='',amount='',actual=''){state.allocRows.push({id:newId(),label,amount,actual});renderAllocRows();}
-function deleteAlloc(id){state.allocRows=state.allocRows.filter(r=>r.id!==id);renderAllocRows();}
+function deleteAlloc(id){
+  const index=state.allocRows.findIndex(r=>r.id===id);if(index===-1)return;
+  undoStack={type:'alloc',index,row:{...state.allocRows[index]}};
+  state.allocRows=state.allocRows.filter(r=>r.id!==id);
+  renderAllocRows();
+  showToast(`"${undoStack.row.label||'Item'}" deleted`,false,true);
+}
 function updateAlloc(id,field,val){
   const r=state.allocRows.find(r=>r.id===id);if(!r)return;r[field]=val;
   if(field==='actual'){
